@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Plaza — design tokens
+
+   A plaza is one square with many independent stalls. That is literally what a
+   multi-tenant marketplace is, so the palette comes from the square: limewashed
+   stone underfoot, painted green woodwork on the stalls, and the amber of
+   afternoon light falling on the goods.
+
+   The layout model is borrowed from the large marketplaces (search dominates the
+   header, categories sit beneath it, the price is the loudest thing on a card)
+   because those patterns are learned behaviour for shoppers and inventing new
+   ones costs the buyer time. The colours and type are not borrowed: no yellow
+   band, no navy-and-orange.
+   ────────────────────────────────────────────────────────────────────────────*/
+
+@theme {
+  /* Surfaces */
+  --color-plaza-stone: #f2f0ea;   /* page ground — limewash, warmer than a grey */
+  --color-plaza-paper: #ffffff;   /* cards and controls */
+  --color-plaza-line:  #e2dfd6;   /* hairlines */
+
+  /* Text */
+  --color-plaza-ink:   #17201c;   /* headings, prices */
+  --color-plaza-mute:  #6b7370;   /* secondary text, placeholders */
+
+  /* Brand */
+  --color-plaza-pine:      #2c4a3e;  /* header band, structure, primary buttons */
+  --color-plaza-pine-soft: #3d6455;  /* hover on pine */
+  --color-plaza-marigold:  #e9a13b;  /* focus rings, accents, highlighted CTA */
+  --color-plaza-clay:      #b4573a;  /* discounts, destructive actions, errors */
+
+  /* Prices and quantities are set in a tabular monospace so that a column of
+     cards lines its digits up. Alignment is the point, not the texture. */
+  --font-num: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  --radius-plaza: 0.375rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-plaza-stone text-plaza-ink antialiased;
+    font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* Keyboard focus stays visible everywhere, including on elements that never
+     get an explicit focus class. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-plaza-marigold;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* The signature: an awning.
+
+   Every stall in a real plaza is under its own canopy, and you find a shop again
+   by remembering its stripe. Each shop here gets a hue derived from its slug, so
+   the same shop always wears the same awning without anyone choosing a colour.
+   `--awning` is set inline by the Awning component. */
+@utility awning {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--awning) 0 7px,
+    var(--awning-canvas) 7px 14px
+  );
+}
+
+/* Numerals that line up down a column. */
+@utility num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
