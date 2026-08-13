@@ -1,27 +1,26 @@
 import clsx from 'clsx'
 
-// Two levels of emphasis, so the strongest one keeps its meaning. `accent` is
-// reserved for the single action that completes a purchase; `primary` carries
-// everything else that submits. A screen with two marigold buttons has no
-// primary action at all.
+// One blue carries every action. `primary` is the solid one, `secondary` the
+// same blue on a tint — that pairing is what marketplaces use for "buy now" and
+// "add to cart", where both are wanted but only one is the main path.
 const VARIANTS = {
-  accent: 'bg-plaza-marigold text-plaza-ink hover:bg-plaza-marigold/85 border-transparent',
-  primary: 'bg-plaza-pine text-plaza-paper hover:bg-plaza-pine-soft border-transparent',
-  quiet: 'bg-plaza-paper text-plaza-pine border-plaza-line hover:border-plaza-pine',
-  danger: 'bg-plaza-clay text-plaza-paper hover:bg-plaza-clay/85 border-transparent',
-  ghost: 'bg-transparent text-plaza-pine border-transparent hover:bg-plaza-pine/8',
+  primary: 'bg-plaza-action text-white hover:bg-plaza-action-deep border-transparent',
+  secondary: 'bg-plaza-action-tint text-plaza-action hover:bg-plaza-action-tint/70 border-transparent',
+  outline: 'bg-plaza-surface text-plaza-action border-plaza-action hover:bg-plaza-action-tint',
+  danger: 'bg-plaza-alert text-white hover:bg-plaza-alert/85 border-transparent',
+  ghost: 'bg-transparent text-plaza-action border-transparent hover:bg-plaza-action-tint',
 }
 
 const SIZES = {
   sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-5 py-2.5 text-base',
+  md: 'px-4 py-2.5 text-sm',
+  lg: 'px-6 py-3 text-base',
 }
 
 /**
- * `as` lets the same button carry a route change — the hero CTA is a link, and a
- * link that looks like a button still has to open in a new tab on middle click.
- * Rendering a real anchor is the only way to keep that.
+ * `as` lets the same button carry a route change — a call to action is often a
+ * link, and a link that looks like a button still has to open in a new tab on
+ * middle click. Rendering a real anchor is the only way to keep that.
  */
 const Button = ({
   as: Component = 'button',

@@ -1,40 +1,26 @@
 import { Link } from 'react-router-dom'
-import { MapPinIcon } from '@heroicons/react/20/solid'
-import { Awning } from '../ui'
+import { ShopLogo } from '../ui'
 
 /**
- * One stall in the grid.
+ * One shop in the grid.
  *
- * The awning is the only part of the card that differs between shops, and the
- * shop does not choose it — it comes from the slug. Everything below stays
- * identical from card to card so the grid can be scanned.
+ * Modelled on how a marketplace lists its stores rather than its products:
+ * logo, name, one line of context. There is nothing to compare on price yet, so
+ * the card stays short and the grid stays scannable.
  */
-const ShopCard = ({ shop, cityLabel }) => (
-  <article className="flex flex-col overflow-hidden rounded-plaza border border-plaza-line bg-plaza-paper transition-shadow hover:shadow-md hover:shadow-plaza-ink/10">
-    <Awning seed={shop.slug} />
+const ShopCard = ({ shop, cityLabel, categoryLabel }) => (
+  <Link
+    to={`/s/${shop.slug}`}
+    className="card flex flex-col items-center gap-3 p-4 text-center transition-shadow hover:shadow-md"
+  >
+    <ShopLogo shop={shop} size="md" />
 
-    <Link to={`/s/${shop.slug}`} className="flex grow flex-col gap-2 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold tracking-tight text-plaza-ink">{shop.name}</h3>
-        {shop.category && (
-          <span className="shrink-0 rounded-plaza border border-plaza-line px-2 py-0.5 text-xs text-plaza-mute">
-            {shop.category}
-          </span>
-        )}
-      </div>
+    <span className="line-clamp-2 text-sm font-medium text-plaza-ink">{shop.name}</span>
 
-      <p className="line-clamp-2 grow text-sm text-plaza-mute">
-        {shop.description || 'This shop has not written a description yet.'}
-      </p>
-
-      {cityLabel && (
-        <span className="flex items-center gap-1 text-xs text-plaza-mute">
-          <MapPinIcon className="size-3.5" />
-          {cityLabel}
-        </span>
-      )}
-    </Link>
-  </article>
+    <span className="mt-auto text-xs text-plaza-muted">
+      {[categoryLabel, cityLabel].filter(Boolean).join(' · ')}
+    </span>
+  </Link>
 )
 
 export default ShopCard

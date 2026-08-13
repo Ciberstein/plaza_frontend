@@ -26,11 +26,14 @@ const Access = ({ mode = 'login' }) => {
   const onSubmit = async (values) => {
     try {
       if (creating) {
-        await signUp(values)
-      } else {
-        await signIn({ email: values.email, password: values.password })
+        const created = await signUp(values)
+        // Straight to the account, where the code entry is. Nothing else in the
+        // app tells a new person that something is waiting on them.
+        return navigate(created?.verified ? (location.state?.from ?? '/') : '/account', { replace: true })
       }
-      // Back to wherever the guard interrupted, or the square.
+
+      await signIn({ email: values.email, password: values.password })
+      // Back to wherever the guard interrupted, or the home page.
       navigate(location.state?.from ?? '/', { replace: true })
     } catch {
       // The interceptor has already shown what went wrong.
@@ -39,10 +42,10 @@ const Access = ({ mode = 'login' }) => {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold tracking-tight">
+      <h1 className="text-2xl font-medium">
         {creating ? 'Create your account' : 'Sign in'}
       </h1>
-      <p className="mt-1 text-sm text-plaza-mute">
+      <p className="mt-1 text-sm text-plaza-muted">
         {creating
           ? 'One account to buy and to sell. You can open a shop straight after.'
           : 'Welcome back.'}
@@ -50,7 +53,7 @@ const Access = ({ mode = 'login' }) => {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="mt-6 flex flex-col gap-5 rounded-plaza border border-plaza-line bg-plaza-paper p-5"
+        className="card mt-5 flex flex-col gap-5 p-6"
       >
         {creating && (
           <Input
@@ -87,20 +90,20 @@ const Access = ({ mode = 'login' }) => {
           {creating ? 'Create account' : 'Sign in'}
         </Button>
 
-        <p className="text-center text-sm text-plaza-mute">
+        <p className="text-center text-sm text-plaza-muted">
           {creating ? 'Already have an account?' : 'New to Plaza?'}{' '}
           <button
             type="button"
             onClick={() => setCreating(c => !c)}
-            className="font-medium text-plaza-pine hover:underline"
+            className="font-medium text-plaza-action hover:underline"
           >
             {creating ? 'Sign in' : 'Create one'}
           </button>
         </p>
       </form>
 
-      <p className="mt-4 text-center text-sm text-plaza-mute">
-        <Link to="/" className="hover:underline">Back to the square</Link>
+      <p className="mt-4 text-center text-sm text-plaza-muted">
+        <Link to="/" className="hover:underline">Back to Plaza</Link>
       </p>
     </div>
   )

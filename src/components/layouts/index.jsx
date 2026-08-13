@@ -1,18 +1,19 @@
 import { Outlet } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Header from './Header'
 
 export const Public = () => (
   <div className="flex min-h-dvh flex-col">
     <Header />
-    <main className="mx-auto w-full max-w-7xl grow px-4 py-6">
+    <main className="mx-auto w-full max-w-[1200px] grow px-4 py-5">
       <Outlet />
     </main>
-    <footer className="border-t border-plaza-line bg-plaza-paper">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-sm text-plaza-mute">
-        <span>Plaza — a square where anyone can open a stall.</span>
-        <a href="/sell" className="text-plaza-pine hover:underline">
-          Open your shop
-        </a>
+    <footer className="mt-6 border-t border-plaza-line bg-plaza-surface">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-plaza-muted">
+        <span>Plaza</span>
+        <Link to="/sell" className="text-plaza-action hover:underline">
+          Sell on Plaza
+        </Link>
       </div>
     </footer>
   </div>

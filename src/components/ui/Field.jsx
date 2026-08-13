@@ -13,7 +13,7 @@ const Field = ({ label, htmlFor, optional, hint, error, className, children }) =
     {label && (
       <label htmlFor={htmlFor} className={labelClass}>
         {label}
-        {optional && <span className="text-xs font-normal text-plaza-mute">optional</span>}
+        {optional && <span className="text-xs font-normal text-plaza-muted">optional</span>}
       </label>
     )}
 

@@ -2,45 +2,44 @@ import clsx from 'clsx'
 
 // Control classes live here rather than beside a component so that the files
 // under ui/ export components only. A module that exports both a component and
-// a helper breaks React Fast Refresh, which is why the same helpers had to be
-// preceded by an eslint-disable in earlier projects.
+// a helper breaks React Fast Refresh.
 
 // Every text-entry control — input, textarea, the select button, the combobox —
 // shares this shell so they line up when stacked in a form.
 export const control = ({ error = false, disabled = false, extra = '' } = {}) =>
   clsx(
-    'w-full rounded-plaza border bg-plaza-paper px-3 py-2 text-sm text-plaza-ink',
-    'placeholder:text-plaza-mute transition-colors',
-    // Focus is a pine border with a marigold halo. Marigold alone does not carry
-    // enough contrast against the stone ground to be the only focus signal.
-    'focus:outline-none focus:border-plaza-pine focus:ring-2 focus:ring-plaza-marigold/45',
-    error ? 'border-plaza-clay' : 'border-plaza-line',
-    disabled && 'cursor-not-allowed bg-plaza-stone text-plaza-mute',
+    'w-full rounded-plaza border bg-plaza-surface px-3 py-2.5 text-sm text-plaza-ink',
+    'placeholder:text-plaza-faint transition-colors',
+    // One blue, used here as it is used on links and buttons. A thin ring, not
+    // a glow: the border carrying the colour is enough to locate the field.
+    'focus:outline-none focus:border-plaza-action focus:ring-1 focus:ring-plaza-action',
+    error ? 'border-plaza-alert' : 'border-plaza-line',
+    disabled && 'cursor-not-allowed bg-plaza-hover text-plaza-muted',
     extra,
   )
 
-// The dropdown panel for both Select and Combobox.
+// The dropdown panel for Select, Combobox and the account menu.
 //
 // Width is left to the caller. Headless UI publishes the anchor's measurement
 // under a name taken from the element it anchored to — --button-width for a
-// Listbox, --input-width for a Combobox — so a single shared width class silently
-// resolved to nothing on one of the two and the panel collapsed onto its content.
+// Listbox, --input-width for a Combobox — so a single shared width class
+// silently resolved to nothing on one of the two and collapsed the panel onto
+// its content.
 export const panel = clsx(
-  // The height cap is marked important because anchoring writes its own
-  // max-height inline, computed from the space left in the viewport. That
-  // keeps the panel on screen but lets a long list, cities for instance, run
-  // the full height of it.
+  // Marked important because anchoring writes its own max-height inline,
+  // computed from the space left in the viewport, which otherwise lets a long
+  // list run the full height of the screen.
   'max-h-80! overflow-y-auto rounded-plaza border border-plaza-line',
-  'bg-plaza-paper p-1 shadow-lg shadow-plaza-ink/10 z-50 mt-1',
+  'bg-plaza-surface py-1 shadow-lg z-50 mt-1',
   'focus:outline-none empty:hidden',
 )
 
 export const option = clsx(
   'group flex cursor-pointer select-none items-center justify-between gap-2',
-  'rounded-plaza px-3 py-2 text-sm text-plaza-ink',
-  'data-focus:bg-plaza-pine/8 data-disabled:cursor-not-allowed data-disabled:text-plaza-mute',
+  'px-4 py-2.5 text-sm text-plaza-ink',
+  'data-focus:bg-plaza-hover data-disabled:cursor-not-allowed data-disabled:text-plaza-faint',
 )
 
-export const labelClass = 'flex items-center gap-1 text-sm font-medium text-plaza-ink'
-export const hintClass = 'text-xs text-plaza-mute'
-export const errorClass = 'text-xs text-plaza-clay'
+export const labelClass = 'flex items-center gap-1 text-sm text-plaza-ink'
+export const hintClass = 'text-xs text-plaza-muted'
+export const errorClass = 'text-xs text-plaza-alert'

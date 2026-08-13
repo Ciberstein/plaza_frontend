@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { BuildingStorefrontIcon } from '@heroicons/react/24/outline'
 import ShopCard from '../../shared/ShopCard'
-import { Awning, Button } from '../../ui'
+import { Button } from '../../ui'
 import { useMeta } from '../../../context/meta'
 import shops from '../../../services/shops.services'
 import { useResource } from '../../../hooks/useResource'
@@ -12,68 +13,76 @@ const Home = () => {
   const q = params.get('q')?.trim() || undefined
   const { categories, cities } = useMeta()
 
-  const load = useCallback(() => shops.browse({ category, q }), [category, q])
-  const { data, loading } = useResource(load, `${category ?? ''}|${q ?? ''}`)
+  const load = useCallback(() => shops.browse({ q }), [q])
+  const { data, loading } = useResource(load, q ?? '')
   const list = data ?? []
 
-  const cityLabel = value => cities.find(c => c.value === value)?.label
+  const labelFor = (source, value) => source.find(item => item.value === value)?.label
+  const filtered = Boolean(category || q)
+
+  // A category names a product aisle, and products do not exist yet, so the
+  // strip narrows nothing until the catalogue lands.
   const heading = q
     ? `Results for “${q}”`
     : category
-      ? categories.find(c => c.value === category)?.label ?? category
-      : 'New in the square'
+      ? categories.find(c => c.slug === category)?.label ?? category
+      : 'Shops on Plaza'
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="overflow-hidden rounded-plaza border border-plaza-line bg-plaza-paper">
-        {/* A row of awnings, one per shop actually open, so the band is a
-            picture of the square rather than decoration. */}
-        <div className="flex">
-          {(list.length ? list.slice(0, 6) : [{ slug: 'plaza' }]).map(shop => (
-            <Awning key={shop.slug} seed={shop.slug} rounded={false} className="h-2" />
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-4 p-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Every stall here belongs to someone.
-            </h1>
-            <p className="mt-1.5 max-w-lg text-sm text-plaza-mute">
-              Buy from small shops across Colombia, or open your own in a few minutes
-              and sell to the same square.
-            </p>
-          </div>
-
-          <Button variant="accent" size="lg" as={Link} to="/sell">
-            Open your shop
-          </Button>
-        </div>
-      </section>
+    <div className="flex flex-col gap-5">
+      {/* A slim strip, not a headline. The home page of a marketplace is a
+          route to the goods; anything that fills the first screen with a slogan
+          pushes the goods below the fold. */}
+      {!filtered && (
+        <section className="card flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <p className="text-sm text-plaza-ink">
+            <span className="font-medium">Sell on Plaza.</span>{' '}
+            <span className="text-plaza-muted">
+              Open a shop in a few minutes and start selling to buyers across Colombia.
+            </span>
+          </p>
+          <Button as={Link} to="/sell" size="sm">Open your shop</Button>
+        </section>
+      )}
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">{heading}</h2>
+        <div className="mb-3 flex items-baseline justify-between gap-4">
+          <h1 className="text-lg font-medium text-plaza-ink">{heading}</h1>
+          {filtered && (
+            <Link to="/" className="text-sm text-plaza-action hover:underline">
+              Clear filters
+            </Link>
+          )}
+        </div>
 
         {loading ? (
-          <p className="text-sm text-plaza-mute">Loading the square…</p>
+          // Placeholders the shape of the cards, so the grid does not jump when
+          // the answer arrives.
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="card h-40 animate-pulse" />
+            ))}
+          </div>
         ) : list.length === 0 ? (
-          // An empty square is an invitation, not an apology.
-          <div className="rounded-plaza border border-dashed border-plaza-line p-10 text-center">
-            <p className="text-sm text-plaza-mute">
+          <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
+            <BuildingStorefrontIcon className="size-10 text-plaza-faint" />
+            <p className="text-sm text-plaza-muted">
               {q
-                ? `No shop matches "${q}". Try a shorter word.`
+                ? `No shop matches “${q}”. Try a shorter word.`
                 : category
                   ? 'No shop has opened in this category yet.'
                   : 'No shop has opened yet.'}
             </p>
-            <Button variant="primary" className="mt-4" as={Link} to="/sell">
-              Be the first
-            </Button>
+            <Button as={Link} to="/sell" size="sm">Open the first one</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
             {list.map(shop => (
-              <ShopCard key={shop.id} shop={shop} cityLabel={cityLabel(shop.city)} />
+              <ShopCard
+                key={shop.id}
+                shop={shop}
+                cityLabel={labelFor(cities, shop.cityId)}
+              />
             ))}
           </div>
         )}

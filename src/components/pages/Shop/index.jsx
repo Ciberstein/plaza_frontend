@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { MapPinIcon, TruckIcon } from '@heroicons/react/20/solid'
-import { Awning, Button } from '../../ui'
+import { Button, ShopLogo } from '../../ui'
 import { useMeta } from '../../../context/meta'
 import shops from '../../../services/shops.services'
 import { useResource } from '../../../hooks/useResource'
@@ -9,43 +9,40 @@ import { useResource } from '../../../hooks/useResource'
 const Shop = () => {
   const { slug } = useParams()
   const { cities, shipping } = useMeta()
+
   const load = useCallback(() => shops.storefront(slug), [slug])
   const { data: shop, error, loading } = useResource(load, slug)
 
-  if (loading) return <p className="text-sm text-plaza-mute">Loading the shop…</p>
+  if (loading) return <div className="card h-44 animate-pulse" />
 
   if (error || !shop) {
     return (
-      <div className="rounded-plaza border border-dashed border-plaza-line p-10 text-center">
-        <h1 className="font-semibold">No shop at this address</h1>
-        <p className="mt-1 text-sm text-plaza-mute">
+      <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center">
+        <h1 className="font-medium">No shop at this address</h1>
+        <p className="text-sm text-plaza-muted">
           It may have closed, or the link may be wrong.
         </p>
-        <Button variant="quiet" className="mt-4" as={Link} to="/">
-          Back to the square
-        </Button>
+        <Button as={Link} to="/" variant="secondary" size="sm">Back to Plaza</Button>
       </div>
     )
   }
 
-  const city = cities.find(c => c.value === shop.city)
+  const city = cities.find(c => c.value === shop.cityId)
   const delivery = shipping.find(s => s.value === shop.shipping)
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="overflow-hidden rounded-plaza border border-plaza-line bg-plaza-paper">
-        {/* The same awning the card wore, so arriving here confirms you reached
-            the shop you clicked. */}
-        <Awning seed={shop.slug} className="h-2" />
+    <div className="flex flex-col gap-5">
+      <header className="card flex flex-wrap items-start gap-5 p-6">
+        <ShopLogo shop={shop} size="lg" />
 
-        <div className="flex flex-col gap-3 p-6">
-          <h1 className="text-2xl font-bold tracking-tight">{shop.name}</h1>
+        <div className="min-w-0 grow">
+          <h1 className="text-2xl font-medium text-plaza-ink">{shop.name}</h1>
 
           {shop.description && (
-            <p className="max-w-2xl text-sm text-plaza-mute">{shop.description}</p>
+            <p className="mt-3 max-w-2xl text-sm text-plaza-ink">{shop.description}</p>
           )}
 
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-plaza-mute">
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-plaza-muted">
             {city && (
               <span className="flex items-center gap-1.5">
                 <MapPinIcon className="size-4" />
@@ -63,8 +60,8 @@ const Shop = () => {
       </header>
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">What they sell</h2>
-        <div className="rounded-plaza border border-dashed border-plaza-line p-10 text-center text-sm text-plaza-mute">
+        <h2 className="mb-3 text-lg font-medium">Products</h2>
+        <div className="card px-6 py-14 text-center text-sm text-plaza-muted">
           This shop has not listed anything yet.
         </div>
       </section>

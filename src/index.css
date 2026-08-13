@@ -3,37 +3,54 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Plaza — design tokens
 
-   A plaza is one square with many independent stalls. That is literally what a
-   multi-tenant marketplace is, so the palette comes from the square: limewashed
-   stone underfoot, painted green woodwork on the stalls, and the amber of
-   afternoon light falling on the goods.
+   Built on the pattern language the big marketplaces share, because it is
+   learned behaviour for shoppers and inventing an alternative costs them time:
+   a flat colour band across the top with the search inside it, a light grey
+   page, white cards, one colour for every action, and one colour that only
+   ever means "this is good news for your wallet".
 
-   The layout model is borrowed from the large marketplaces (search dominates the
-   header, categories sit beneath it, the price is the loudest thing on a card)
-   because those patterns are learned behaviour for shoppers and inventing new
-   ones costs the buyer time. The colours and type are not borrowed: no yellow
-   band, no navy-and-orange.
+   Every value here was solved against a WCAG contrast target for the surface
+   it actually sits on, not chosen by eye. Six of the first draft's colours
+   failed, including the link green and the placeholder grey.
+
+   No metaphor, no texture, no decorative device. On a marketplace the product
+   photos are the only thing allowed to be colourful; everything else is chrome
+   and gets out of the way.
    ────────────────────────────────────────────────────────────────────────────*/
 
 @theme {
+  /* Chrome. A deep green band with white text rather than a bright band with
+     dark text: bright is the shape every large marketplace already occupies,
+     and at this depth the header reads as retail without borrowing anyone's
+     colour. */
+  --color-plaza-band: #00703c;
+  --color-plaza-band-deep: #005c31;   /* the category row */
+
   /* Surfaces */
-  --color-plaza-stone: #f2f0ea;   /* page ground — limewash, warmer than a grey */
-  --color-plaza-paper: #ffffff;   /* cards and controls */
-  --color-plaza-line:  #e2dfd6;   /* hairlines */
+  --color-plaza-ground: #f0f0f0;      /* the page */
+  --color-plaza-surface: #ffffff;     /* cards, inputs, panels */
+  --color-plaza-line: #e0e0e0;        /* hairlines */
+  --color-plaza-hover: #f5f5f5;       /* row and option hover */
 
-  /* Text */
-  --color-plaza-ink:   #17201c;   /* headings, prices */
-  --color-plaza-mute:  #6b7370;   /* secondary text, placeholders */
+  /* Text. Three levels, no more: a fourth grey is never distinguishable. */
+  --color-plaza-ink: #1a1a1a;
+  --color-plaza-muted: #696969;
+  --color-plaza-faint: #8f8f8f;
 
-  /* Brand */
-  --color-plaza-pine:      #2c4a3e;  /* header band, structure, primary buttons */
-  --color-plaza-pine-soft: #3d6455;  /* hover on pine */
-  --color-plaza-marigold:  #e9a13b;  /* focus rings, accents, highlighted CTA */
-  --color-plaza-clay:      #b4573a;  /* discounts, destructive actions, errors */
+  /* One green for every action: links, primary buttons, focus, selection. */
+  --color-plaza-action: #06713d;
+  --color-plaza-action-deep: #04512c;
+  --color-plaza-action-tint: #e8f3ed;
 
-  /* Prices and quantities are set in a tabular monospace so that a column of
-     cards lines its digits up. Alignment is the point, not the texture. */
-  --font-num: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+  /* Money saved — free shipping, a discount. Orange rather than the usual
+     green, because green is now the brand and a badge in the brand colour
+     stops registering as a signal. Orange also carries the urgency a deal
+     wants. */
+  --color-plaza-deal: #bf510c;
+
+  /* The request failed, or the action destroys something. */
+  --color-plaza-alert: #c9302c;
+  --color-plaza-alert-tint: #fdecea;
 
   --radius-plaza: 0.375rem;
 }
@@ -44,14 +61,18 @@
   }
 
   body {
-    @apply bg-plaza-stone text-plaza-ink antialiased;
+    @apply bg-plaza-ground text-plaza-ink antialiased;
     font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 
-  /* Keyboard focus stays visible everywhere, including on elements that never
-     get an explicit focus class. */
+  /* Prices, quantities and dates line their digits up without changing
+     typeface. A monospace price is a developer habit, not a shop's. */
+  table, .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-plaza-marigold;
+    @apply outline-2 outline-offset-2 outline-plaza-action;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -64,23 +85,10 @@
   }
 }
 
-/* The signature: an awning.
-
-   Every stall in a real plaza is under its own canopy, and you find a shop again
-   by remembering its stripe. Each shop here gets a hue derived from its slug, so
-   the same shop always wears the same awning without anyone choosing a colour.
-   `--awning` is set inline by the Awning component. */
-@utility awning {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    var(--awning) 0 7px,
-    var(--awning-canvas) 7px 14px
-  );
-}
-
-/* Numerals that line up down a column. */
-@utility num {
-  font-family: var(--font-num);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+/* The shadow every card and panel uses. One elevation, applied consistently,
+   reads as a system; three arbitrary ones read as indecision. */
+@utility card {
+  background-color: var(--color-plaza-surface);
+  border-radius: var(--radius-plaza);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
 }

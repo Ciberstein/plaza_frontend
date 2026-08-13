@@ -8,7 +8,7 @@ import shops from '../../../services/shops.services'
 const Sell = () => {
   // The same lists the API validates against, so the form cannot offer a value
   // the server will refuse.
-  const { categories, cities, shipping, ready } = useMeta()
+  const { cities, shipping, ready } = useMeta()
   const navigate = useNavigate()
 
   const {
@@ -19,8 +19,7 @@ const Sell = () => {
   } = useForm({
     defaultValues: {
       name: '',
-      category: null,
-      city: null,
+      cityId: null,
       shipping: 'seller',
       description: '',
       terms: false,
@@ -31,7 +30,7 @@ const Sell = () => {
     void terms
     try {
       const shop = await shops.create(values)
-      notify(`${shop.name} is ready. Publish it when you want it in the square.`, 'success')
+      notify(`${shop.name} was created. Send it for review when it is ready.`, 'success')
       navigate('/dashboard')
     } catch {
       // Already reported by the response interceptor.
@@ -40,14 +39,14 @@ const Sell = () => {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="text-2xl font-bold tracking-tight">Open your shop</h1>
-      <p className="mt-1 text-sm text-plaza-mute">
-        Five fields now, your first listing after that. You can change any of this later.
+      <h1 className="text-2xl font-medium">Open your shop</h1>
+      <p className="mt-1 text-sm text-plaza-muted">
+        A shop is optional — you can sell under your own name. A shop is a brand, and Plaza reviews it before it opens.
       </p>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="mt-6 flex flex-col gap-5 rounded-plaza border border-plaza-line bg-plaza-paper p-5"
+        className="card mt-5 flex flex-col gap-5 p-6"
       >
         <Input
           label="Shop name"
@@ -61,25 +60,7 @@ const Sell = () => {
         />
 
         <Controller
-          name="category"
-          control={control}
-          rules={{ required: 'Pick the category most of your stock belongs to.' }}
-          render={({ field }) => (
-            <Select
-              label="Main category"
-              options={categories}
-              value={field.value}
-              onChange={field.onChange}
-              placeholder={ready ? 'Pick a category' : 'Loading…'}
-              disabled={!ready}
-              hint="Shoppers browsing this category will see your shop."
-              error={errors.category?.message}
-            />
-          )}
-        />
-
-        <Controller
-          name="city"
+          name="cityId"
           control={control}
           rules={{ required: 'We need a city to estimate delivery times.' }}
           render={({ field }) => (
@@ -91,7 +72,7 @@ const Sell = () => {
               placeholder={ready ? 'Start typing a city' : 'Loading…'}
               disabled={!ready}
               emptyMessage="No city by that name. Try the department instead."
-              error={errors.city?.message}
+              error={errors.cityId?.message}
             />
           )}
         />
@@ -139,7 +120,7 @@ const Sell = () => {
           <Button type="submit" variant="primary" loading={isSubmitting}>
             Open shop
           </Button>
-          <Button variant="quiet" type="reset">
+          <Button variant="secondary" type="reset">
             Clear
           </Button>
         </div>

@@ -4,9 +4,9 @@ import clsx from 'clsx'
 import { subscribe } from '../../utils/notify'
 
 const TONES = {
-  error: 'border-plaza-clay bg-plaza-clay text-plaza-paper',
-  success: 'border-plaza-pine bg-plaza-pine text-plaza-paper',
-  info: 'border-plaza-line bg-plaza-paper text-plaza-ink',
+  error: 'border-plaza-alert bg-plaza-alert text-white',
+  success: 'border-plaza-action bg-plaza-action text-white',
+  info: 'border-plaza-line bg-plaza-surface text-plaza-ink',
 }
 
 const LIFETIME = 6000
