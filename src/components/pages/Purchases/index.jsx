@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, ShopLogo, Textarea } from '../../ui'
+import Contact from '../../shared/Contact'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
 import orders from '../../../services/orders.services'
@@ -18,7 +19,9 @@ const STATUS = {
   confirmed: {
     label: 'Confirmed',
     tone: 'bg-good-tint text-good',
-    note: 'Agree the handover with them. You pay when you get it.',
+    // The one place a buyer finds out they are committed. Said here rather
+    // than left to the missing button, which explains nothing.
+    note: 'Agree the handover with them. You pay when you get it. Only the seller can cancel from here.',
   },
   delivered: {
     label: 'Delivered',
@@ -32,7 +35,10 @@ const STATUS = {
   },
 }
 
-const OPEN = ['pending', 'confirmed']
+// Only while the seller has not answered. Once they accept, they have set
+// stock aside for it, and the way out is theirs to offer. Enforced by the API;
+// this is the button matching the rule rather than inventing it.
+const BUYER_MAY_CANCEL = ['pending']
 
 const Purchases = () => {
   const load = useCallback(() => orders.mine(), [])
@@ -126,7 +132,7 @@ const Purchases = () => {
                           </p>
                         </div>
 
-                        {OPEN.includes(part.status) && (
+                        {BUYER_MAY_CANCEL.includes(part.status) && (
                           <Button.Action
                             variant="ghost" color="danger" size="sm"
                             onClick={() => setCancelling({ orderId: order.id, part })}
@@ -151,6 +157,15 @@ const Purchases = () => {
                           </li>
                         ))}
                       </ul>
+
+                      {/* Only present once the seller confirmed: until then the
+                          server does not send it. Placing an order must not be
+                          a way to collect people's contact details. */}
+                      <Contact
+                        who="seller"
+                        email={part.seller?.email}
+                        phone={part.seller?.phone}
+                      />
 
                       {/* Who backed out, and why if they said. "Cancelled" on its
                           own does not tell you whether to wait or look elsewhere. */}

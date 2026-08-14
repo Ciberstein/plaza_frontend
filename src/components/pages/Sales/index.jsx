@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, Textarea } from '../../ui'
+import Contact from '../../shared/Contact'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
 import orders from '../../../services/orders.services'
@@ -152,6 +153,15 @@ const Sales = () => {
                     </li>
                   ))}
                 </ul>
+
+                {/* Only present once you confirmed it: until then the server
+                    does not send it. The same rule that guards yours guards
+                    theirs. */}
+                <Contact
+                  who="buyer"
+                  email={sale.order?.buyer?.email}
+                  phone={sale.order?.buyer?.phone}
+                />
 
                 {sale.status === 'cancelled' && (
                   <p className="mt-4 rounded-pz-sm border-l-[3px] border-line-strong bg-sunk px-4 py-3 text-sm leading-relaxed text-muted">

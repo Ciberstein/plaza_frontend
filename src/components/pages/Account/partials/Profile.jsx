@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Avatar, Button, Input } from '../../../ui'
+import { Controller, useForm } from 'react-hook-form'
+import { Avatar, Button, Input, Select } from '../../../ui'
+import { useMeta } from '../../../../context/meta'
 import { notify } from '../../../../utils/notify'
 import account from '../../../../services/account.services'
 
@@ -11,15 +12,24 @@ const Profile = ({ me, onChange }) => {
   const fileInput = useRef(null)
   const [busy, setBusy] = useState(false)
 
+  const { countries, ready: metaReady } = useMeta()
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm({ defaultValues: { username: me.username } })
+  } = useForm({
+    defaultValues: {
+      username: me.username,
+      phone: me.phone ?? '',
+      phoneCountryId: me.phoneCountryId ?? null,
+    },
+  })
 
-  const save = async ({ username }) => {
+  const save = async (values) => {
     try {
-      onChange(await account.updateProfile({ username }))
+      onChange(await account.updateProfile(values))
       notify('Your name was updated.', 'success')
     } catch {
       // Already reported by the response interceptor.
@@ -105,9 +115,50 @@ const Profile = ({ me, onChange }) => {
           })}
         />
 
+        <div className="grid gap-4 sm:grid-cols-[1fr_1.2fr]">
+          <Controller
+            name="phoneCountryId"
+            control={control}
+
+            render={({ field }) => (
+              <Select
+                label="Country code"
+                options={countries.map(c => ({
+                  value: c.value,
+                  label: c.label,
+                  subtitle: c.dialCode ? `+${c.dialCode}` : undefined,
+                }))}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={metaReady ? 'Choose' : 'Loading…'}
+                disabled={!metaReady}
+                error={errors.phoneCountryId?.message}
+              />
+            )}
+          />
+
+          <Input
+            label="Phone"
+            optional
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel-national"
+            placeholder="300 123 4567"
+            hint="Only shared once an order is agreed. Your email is shared either way."
+            error={errors.phone?.message}
+            {...register('phone', {
+              validate: value => {
+                const digits = String(value ?? '').replace(/\D/g, '')
+                // Empty is how the field is cleared, so it cannot be an error.
+                return !digits || digits.length >= 6 || 'That number is too short.'
+              },
+            })}
+          />
+        </div>
+
         <div>
           <Button.Action type="submit" size="sm" loading={isSubmitting} disabled={!isDirty}>
-            Save name
+            Save changes
           </Button.Action>
         </div>
       </form>

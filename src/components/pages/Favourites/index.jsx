@@ -17,12 +17,17 @@ const GRID = 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-
  * only decides whether the page waits to be told.
  */
 const Favourites = () => {
-  const { ids, ready } = useFavourites()
+  // Only for the loading gate. The list itself is not filtered against this
+  // set: it used to be, so that un-hearting a card removed it at once, and the
+  // price was that a failed ids request — which is swallowed on purpose,
+  // because a badge is not worth a toast — emptied the whole page. Two fetches
+  // that have to agree is one more thing that can disagree.
+  const { ready } = useFavourites()
 
   const load = useCallback(() => favourites.list(), [])
   const { data, loading } = useResource(load, 'favourites')
 
-  const rows = (data ?? []).filter(row => row.product && ids.has(row.productId))
+  const rows = (data ?? []).filter(row => row.product)
 
   if (loading || !ready) {
     return (
@@ -68,10 +73,11 @@ const Favourites = () => {
               // it has. Flicking through them is a browsing thing, and this is
               // a page of decisions already made.
               product={row.product}
-              // Paused, archived, or behind a shop that closed. Kept on the
-              // page and marked, because a bookmark that vanishes reads as the
-              // site losing it rather than the seller withdrawing it.
-              unavailable={!row.available}
+              // Only active and paused reach this list; the server leaves out
+              // anything the public has no business seeing. Paused is kept and
+              // marked, because a bookmark that vanishes reads as the site
+              // losing it rather than the seller withdrawing it.
+              state={row.state}
             />
           ))}
         </div>

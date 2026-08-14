@@ -147,13 +147,13 @@ const Listings = () => {
               const cover = product.images?.[0]?.url
 
               return (
-                <li key={product.id} className="p-4">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                <li key={product.id} className="p-4 flex flex-col gap-4">
+                  <div className="flex flex-wrap gap-x-4 gap-y-3">
                     {cover ? (
                       <img
                         src={cover}
                         alt=""
-                        className="size-16 shrink-0 rounded-pz object-cover"
+                        className="size-16 shrink-0 rounded-sm object-cover"
                       />
                     ) : (
                       // The missing photo is the most common reason publishing
@@ -163,7 +163,7 @@ const Listings = () => {
                       </span>
                     )}
 
-                    <div className="min-w-0 grow">
+                    <div className="flex flex-col min-w-0 grow">
                       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                         <Link
                           to={`/listings/${product.id}`}
@@ -171,11 +171,11 @@ const Listings = () => {
                         >
                           {product.title}
                         </Link>
-                        <span className={clsx('rounded-pz-sm px-2 py-0.5 text-[11px] font-semibold', status.tone)}>
+                        <span className={clsx('rounded-pz-sm px-2 text-[11px] font-semibold', status.tone)}>
                           {status.label}
                         </span>
                       </div>
-                      <p className="tabular mt-1 text-sm text-muted">
+                      <p className="tabular text-sm text-muted">
                         {formatMoney(product.price, product.currency)}
                         <span className="text-faint"> · {product.stock} in stock</span>
                       </p>
@@ -196,7 +196,7 @@ const Listings = () => {
                   </div>
 
                   {status.note && (
-                    <p className="mt-3 text-sm leading-relaxed text-muted">{status.note}</p>
+                    <p className="text-sm leading-relaxed text-muted">{status.note}</p>
                   )}
                 </li>
               )

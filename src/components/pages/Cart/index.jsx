@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MinusIcon, PhotoIcon, PlusIcon, TrashIcon } from '@heroicons/react/20/solid'
-import { Button } from '../../ui'
+import { Button, Confirm } from '../../ui'
 import { useCart } from '../../../context/cart'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
@@ -22,6 +22,7 @@ const Cart = () => {
 
   const [round, setRound] = useState(0)
   const [busy, setBusy] = useState(false)
+  const [asking, setAsking] = useState(false)
 
   // The round is bumped after every change, which is what asks the hook to
   // fetch again. Amounts and totals are the server's answer, never a guess made
@@ -62,6 +63,7 @@ const Cart = () => {
   }
 
   const place = async () => {
+    setAsking(false)
     setBusy(true)
     try {
       const order = await orders.place(
@@ -120,14 +122,14 @@ const Cart = () => {
         </div>
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem]">
-          <ul className="panel divide-y divide-line">
+          <ul className="panel divide-y divide-line h-min">
             {items.map(({ productId, quantity, product }) => (
               <li key={productId} className="flex flex-wrap items-center gap-4 p-4">
                 {product.cover ? (
                   <img
                     src={product.cover}
                     alt=""
-                    className="size-20 shrink-0 rounded-pz object-cover"
+                    className="size-20 shrink-0 rounded-sm object-cover"
                   />
                 ) : (
                   <span className="flex size-20 shrink-0 items-center justify-center rounded-pz bg-sunk text-faint">
@@ -206,7 +208,7 @@ const Cart = () => {
               size="lg" full className="mt-5"
               loading={busy}
               disabled={overStock.length > 0}
-              onClick={place}
+              onClick={() => setAsking(true)}
             >
               Place order
             </Button.Action>
@@ -219,6 +221,19 @@ const Cart = () => {
           </div>
         </div>
       )}
+
+      {/* One question for the whole basket, not one per seller. The commitment
+          is the same on each part of it. */}
+      <Confirm
+        open={asking}
+        title="Place this order?"
+        body="You can call this off freely while the seller has not answered. Once they accept, they set the item aside for you and only they can cancel it. Nothing is paid through Plaza: you settle with them on handover."
+        confirmLabel="Place order"
+        confirmColor="primary"
+        loading={busy}
+        onConfirm={place}
+        onCancel={() => setAsking(false)}
+      />
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapPinIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
-import { Avatar, Button, ShopLogo } from '../../ui'
+import { Avatar, Button, Confirm, ShopLogo } from '../../ui'
 import { useAuth } from '../../../context/auth'
 import { useCart } from '../../../context/cart'
 import { useMeta } from '../../../context/meta'
@@ -165,6 +165,7 @@ const Buy = ({ product }) => {
   const { add } = useCart()
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
+  const [asking, setAsking] = useState(false)
 
   // Both sides can be undefined, and in JavaScript that compares equal. Without
   // the guard a signed-out visitor was told this was their own listing, which
@@ -222,6 +223,7 @@ const Buy = ({ product }) => {
   }
 
   const buyNow = async () => {
+    setAsking(false)
     setBusy(true)
     try {
       const order = await orders.place([{ productId: product.id, quantity: 1 }])
@@ -236,9 +238,23 @@ const Buy = ({ product }) => {
 
   return (
     <div className="flex flex-col gap-3">
-      <Button.Action size="lg" full loading={busy} onClick={buyNow}>
+      <Button.Action size="lg" full loading={busy} onClick={() => setAsking(true)}>
         Buy now
       </Button.Action>
+
+      {/* Asked before the order, not explained after it. What changes at the
+          moment the seller accepts is the one thing a buyer cannot discover on
+          their own, and by then it is too late to matter. */}
+      <Confirm
+        open={asking}
+        title="Place this order?"
+        body="You can call this off freely while the seller has not answered. Once they accept, they set the item aside for you and only they can cancel it. Nothing is paid through Plaza: you settle with them on handover."
+        confirmLabel="Place order"
+        confirmColor="primary"
+        loading={busy}
+        onConfirm={buyNow}
+        onCancel={() => setAsking(false)}
+      />
 
       <Button.Action
         variant="soft" size="lg" full disabled={busy}

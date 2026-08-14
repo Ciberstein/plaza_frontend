@@ -16,6 +16,7 @@ const Confirm = ({
   title,
   body,
   confirmLabel = 'Delete',
+  confirmColor = 'danger',
   loading = false,
   onConfirm,
   onCancel,
@@ -43,7 +44,7 @@ const Confirm = ({
           <Button.Action variant="ghost" onClick={onCancel} disabled={loading}>
             Cancel
           </Button.Action>
-          <Button.Action color="danger" onClick={onConfirm} loading={loading}>
+          <Button.Action color={confirmColor} onClick={onConfirm} loading={loading}>
             {confirmLabel}
           </Button.Action>
         </div>

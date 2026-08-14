@@ -34,7 +34,7 @@ const OPENED_AT = Date.now()
  * click from reaching it. They are buttons inside an anchor, which is invalid
  * markup, so the anchor is the outer element and they preventDefault instead.
  */
-const ProductCard = ({ product, index = 0, unavailable = false }) => {
+const ProductCard = ({ product, index = 0, state = 'active' }) => {
   const { account } = useAuth()
   const { has, toggle } = useFavourites()
   const [shot, setShot] = useState(0)
@@ -66,22 +66,19 @@ const ProductCard = ({ product, index = 0, unavailable = false }) => {
     if (!mine) toggle(product.id)
   }
 
-  // Not a link when there is nowhere to go: the public endpoint refuses a
-  // listing that is not on sale, so following one lands on "this listing is
-  // gone", which reads as the site losing things rather than as the seller
-  // pausing them.
-  const Frame = unavailable ? 'div' : Link
-  const frameProps = unavailable ? {} : { to: `/p/${product.id}` }
+  // Always a link. A paused listing keeps its own address on purpose — whoever
+  // saved it or was sent the link should open it and be told the seller paused
+  // it, rather than be handed a card that does nothing.
+  const paused = state === 'paused'
 
   return (
-    <Frame
-      {...frameProps}
+    <Link
+      to={`/p/${product.id}`}
       style={{ '--i': index }}
       className={clsx(
         'rise-in group relative flex flex-col overflow-hidden rounded-pz border border-line bg-surface',
-        unavailable
-          ? 'opacity-60'
-          : 'transition-all duration-300 ease-pz hover:border-line-strong hover:shadow-sm',
+        'transition-all duration-300 ease-pz hover:border-line-strong hover:shadow-sm',
+        paused && 'opacity-70',
       )}
     >
       <span className="relative block">
@@ -101,13 +98,13 @@ const ProductCard = ({ product, index = 0, unavailable = false }) => {
           </span>
         )}
 
-        {unavailable && (
+        {paused && (
           <span className="absolute inset-x-0 bottom-0 z-10 bg-ink/85 py-1.5 text-center text-[11px] font-semibold tracking-wide text-ground uppercase">
-            No longer for sale
+            Paused by the seller
           </span>
         )}
 
-        {fresh && !unavailable && (
+        {fresh && !paused && (
           <span className="absolute top-2 left-2 rounded-pz-sm bg-ink/85 px-2 py-1 text-[11px] font-semibold text-ground">
             Just listed
           </span>
@@ -143,7 +140,7 @@ const ProductCard = ({ product, index = 0, unavailable = false }) => {
           )}
         </button>
 
-        {images.length > 1 && !unavailable && (
+        {images.length > 1 && !paused && (
           <>
             {/* Shown on hover on a pointer, always on a touch screen, where
                 there is no hover to reveal them with. */}
@@ -195,7 +192,7 @@ const ProductCard = ({ product, index = 0, unavailable = false }) => {
           {[seller, condition].filter(Boolean).join(' · ')}
         </span>
       </span>
-    </Frame>
+    </Link>
   )
 }
 
