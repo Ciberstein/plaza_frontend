@@ -4,6 +4,15 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button, Input } from '../../ui'
 import { useAuth } from '../../../context/auth'
 
+// What an account is actually for, in the order it happens. Not a feature list:
+// each line is a thing the app will or will not let you do, and the third one
+// is the only reason anyone is ever asked to confirm an address.
+const WHAT_YOU_GET = [
+  'Buy from any shop on Plaza.',
+  'Sell under your own name, or open a shop.',
+  'Confirm your email to start listing.',
+]
+
 /**
  * One page for both signing in and creating an account.
  *
@@ -41,69 +50,98 @@ const Access = ({ mode = 'login' }) => {
   }
 
   return (
-    <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-medium">
-        {creating ? 'Create your account' : 'Sign in'}
-      </h1>
-      <p className="mt-1 text-sm text-plaza-muted">
-        {creating
-          ? 'One account to buy and to sell. You can open a shop straight after.'
-          : 'Welcome back.'}
-      </p>
+    <div className="shell py-8 sm:py-12">
+      <div className="mx-auto grid max-w-4xl overflow-hidden rounded-pz border border-line lg:grid-cols-[0.85fr_1fr]">
+        {/* The one page in the app a person may land on before seeing anything
+            else, so it is the one page that says what Plaza is.
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="card mt-5 flex flex-col gap-5 p-6"
-      >
-        {creating && (
-          <Input
-            label="Username"
-            autoComplete="username"
-            error={errors.username?.message}
-            {...register('username', { required: 'Pick a name to go by.' })}
-          />
-        )}
+            Below the form on a phone, beside it on a laptop. Someone who came
+            here to sign in should not have to scroll past the pitch to reach
+            the field they came for. */}
+        <aside className="order-last flex flex-col justify-between gap-8 bg-accent-tint p-7 sm:p-9 lg:order-first">
+          <div>
+            <span className="block font-display text-2xl leading-none font-extrabold tracking-[-0.03em] text-ink">
+              Plaza
+            </span>
+            <span
+              aria-hidden
+              className="mt-2 block h-[3px] w-16 rounded-full"
+              style={{
+                background:
+                  'repeating-linear-gradient(90deg, var(--pz-accent) 0 25%, var(--pz-link) 25% 50%)',
+              }}
+            />
+          </div>
 
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          error={errors.email?.message}
-          {...register('email', { required: 'Your email is required.' })}
-        />
+          <ul className="flex flex-col gap-3.5">
+            {WHAT_YOU_GET.map(line => (
+              <li key={line} className="text-[15px] leading-snug text-muted">
+                {line}
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-        <Input
-          label="Password"
-          type="password"
-          autoComplete={creating ? 'new-password' : 'current-password'}
-          hint={creating ? 'At least 8 characters.' : undefined}
-          error={errors.password?.message}
-          {...register('password', {
-            required: 'Your password is required.',
-            minLength: creating
-              ? { value: 8, message: 'Use at least 8 characters.' }
-              : undefined,
-          })}
-        />
+        <div className="bg-surface p-7 sm:p-9">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">
+            {creating ? 'Create your account' : 'Sign in'}
+          </h1>
+          <p className="mt-1.5 text-sm text-muted">
+            {creating ? 'One account to buy and to sell.' : 'Welcome back.'}
+          </p>
 
-        <Button type="submit" full loading={isSubmitting}>
-          {creating ? 'Create account' : 'Sign in'}
-        </Button>
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-7 flex flex-col gap-5">
+            {creating && (
+              <Input
+                label="Username"
+                autoComplete="username"
+                error={errors.username?.message}
+                {...register('username', { required: 'Pick a name to go by.' })}
+              />
+            )}
 
-        <p className="text-center text-sm text-plaza-muted">
-          {creating ? 'Already have an account?' : 'New to Plaza?'}{' '}
-          <button
-            type="button"
-            onClick={() => setCreating(c => !c)}
-            className="font-medium text-plaza-action hover:underline"
-          >
-            {creating ? 'Sign in' : 'Create one'}
-          </button>
-        </p>
-      </form>
+            <Input
+              label="Email"
+              type="email"
+              autoComplete="email"
+              error={errors.email?.message}
+              {...register('email', { required: 'Your email is required.' })}
+            />
 
-      <p className="mt-4 text-center text-sm text-plaza-muted">
-        <Link to="/" className="hover:underline">Back to Plaza</Link>
+            <Input
+              label="Password"
+              type="password"
+              autoComplete={creating ? 'new-password' : 'current-password'}
+              hint={creating ? 'At least 8 characters.' : undefined}
+              error={errors.password?.message}
+              {...register('password', {
+                required: 'Your password is required.',
+                minLength: creating
+                  ? { value: 8, message: 'Use at least 8 characters.' }
+                  : undefined,
+              })}
+            />
+
+            <Button type="submit" full loading={isSubmitting} className="mt-1">
+              {creating ? 'Create account' : 'Sign in'}
+            </Button>
+          </form>
+
+          <p className="mt-6 border-t border-line pt-5 text-sm text-muted">
+            {creating ? 'Already have an account?' : 'New to Plaza?'}{' '}
+            <button
+              type="button"
+              onClick={() => setCreating(c => !c)}
+              className="font-medium text-link hover:underline"
+            >
+              {creating ? 'Sign in' : 'Create one'}
+            </button>
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-6 text-center text-sm">
+        <Link to="/" className="text-muted transition-colors hover:text-ink">Back to Plaza</Link>
       </p>
     </div>
   )

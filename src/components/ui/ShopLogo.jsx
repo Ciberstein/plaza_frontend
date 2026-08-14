@@ -1,40 +1,52 @@
 import clsx from 'clsx'
-import { avatarOf } from '../../utils/avatar'
+import { stallOf } from '../../utils/avatar'
 
+// `fill` is the grid card, where the mark is the whole top of the tile. The
+// fixed squares are for rows and headers, where it sits beside text.
 const SIZES = {
-  sm: 'size-10 text-base',
-  md: 'size-16 text-2xl',
-  lg: 'size-24 text-4xl',
+  sm: 'size-11 rounded-pz text-lg',
+  md: 'size-16 rounded-pz text-2xl',
+  lg: 'size-24 rounded-pz text-4xl',
+  fill: 'w-full aspect-4/3 text-5xl',
 }
 
 /**
- * A shop's logo, or a stand-in built from its name.
+ * A shop's logo, or the stall painted for it in `utils/avatar`.
  *
- * Most shops will not have uploaded anything on the day they open, and an empty
- * square in a grid reads as a broken image. A letter tile reads as a shop that
- * has not finished setting up, which is what it is.
+ * An uploaded logo is set on the shop's own paint rather than on the page:
+ * logos arrive as transparent PNGs at every imaginable aspect ratio, and
+ * contain-fitting one onto white leaves a shape floating in a void. On the
+ * paint it reads as a sign on a stall, which is what it is.
  */
 const ShopLogo = ({ shop, size = 'md', className }) => {
-  const { bg, fg, initial } = avatarOf(shop.slug, shop.name)
+  const stall = stallOf(shop.slug ?? '', shop.name ?? '')
+  const box = SIZES[size] ?? SIZES.md
 
-  return shop.logo ? (
-    <img
-      src={shop.logo}
-      alt=""
-      loading="lazy"
-      className={clsx('shrink-0 rounded-plaza object-contain', SIZES[size] ?? SIZES.md, className)}
-    />
-  ) : (
+  return (
     <span
-      aria-hidden
-      style={{ background: bg, color: fg }}
       className={clsx(
-        'flex shrink-0 items-center justify-center rounded-plaza font-semibold',
-        SIZES[size] ?? SIZES.md,
+        'relative block shrink-0 overflow-hidden',
+        box,
         className,
       )}
+      style={{ backgroundColor: stall.front }}
     >
-      {initial}
+      {shop.logo ? (
+        <img
+          src={shop.logo}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 size-full object-contain p-[12%]"
+        />
+      ) : (
+        <span
+          aria-hidden
+          className="absolute inset-0 flex items-center justify-center font-display font-bold leading-none"
+          style={{ color: stall.ink }}
+        >
+          {stall.initial}
+        </span>
+      )}
     </span>
   )
 }

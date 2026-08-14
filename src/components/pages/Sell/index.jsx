@@ -1,132 +1,89 @@
-import { Controller, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import { Button, Checkbox, Combobox, Input, Select, Textarea } from '../../ui'
-import { useMeta } from '../../../context/meta'
-import { notify } from '../../../utils/notify'
-import shops from '../../../services/shops.services'
+import { Link } from 'react-router-dom'
+import { CheckCircleIcon } from '@heroicons/react/20/solid'
+import { Button } from '../../ui'
+import { useAuth } from '../../../context/auth'
 
-const Sell = () => {
-  // The same lists the API validates against, so the form cannot offer a value
-  // the server will refuse.
-  const { cities, shipping, ready } = useMeta()
-  const navigate = useNavigate()
+/**
+ * What it takes to start selling, which is almost nothing.
+ *
+ * A listing belongs to the person who made it. The shop is optional branding on
+ * top of it — that is how the products table is built, and until now the
+ * interface said the opposite, advertising the shop on seven screens as if it
+ * were the way in.
+ *
+ * The call to action is whatever is actually in this person's way. For most of
+ * them that is a confirmed email and nothing else.
+ */
+const StartSelling = () => {
+  const { account, ready } = useAuth()
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    defaultValues: {
-      name: '',
-      cityId: null,
-      shipping: 'seller',
-      description: '',
-      terms: false,
-    },
-  })
+  // Nothing is claimed about the visitor until the session check answers,
+  // so the page does not offer to create an account they already have.
+  if (!ready) return <div className="mt-7 h-11" aria-hidden />
 
-  const onSubmit = async ({ terms, ...values }) => {
-    void terms
-    try {
-      const shop = await shops.create(values)
-      notify(`${shop.name} was created. Send it for review when it is ready.`, 'success')
-      navigate('/dashboard')
-    } catch {
-      // Already reported by the response interceptor.
-    }
+  if (!account) {
+    return (
+      <div className="mt-7">
+        <Button as={Link} to="/access" size="lg">Create an account</Button>
+      </div>
+    )
+  }
+
+  if (!account.verified) {
+    return (
+      <div className="mt-7">
+        <Button as={Link} to="/account" size="lg">Confirm your email</Button>
+        <p className="mt-3 text-sm text-muted">
+          We sent a code to {account.email}.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="mx-auto max-w-xl">
-      <h1 className="text-2xl font-medium">Open your shop</h1>
-      <p className="mt-1 text-sm text-plaza-muted">
-        A shop is optional — you can sell under your own name. A shop is a brand, and Plaza reviews it before it opens.
-      </p>
-
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="card mt-5 flex flex-col gap-5 p-6"
-      >
-        <Input
-          label="Shop name"
-          placeholder="Tejidos del Sur"
-          hint="This is the name buyers see on every listing."
-          error={errors.name?.message}
-          {...register('name', {
-            required: 'Give the shop a name buyers will recognise.',
-            minLength: { value: 3, message: 'Use at least 3 characters.' },
-          })}
-        />
-
-        <Controller
-          name="cityId"
-          control={control}
-          rules={{ required: 'We need a city to estimate delivery times.' }}
-          render={({ field }) => (
-            <Combobox
-              label="City"
-              options={cities}
-              value={field.value}
-              onChange={field.onChange}
-              placeholder={ready ? 'Start typing a city' : 'Loading…'}
-              disabled={!ready}
-              emptyMessage="No city by that name. Try the department instead."
-              error={errors.cityId?.message}
-            />
-          )}
-        />
-
-        <Controller
-          name="shipping"
-          control={control}
-          render={({ field }) => (
-            <Select
-              label="How orders get delivered"
-              options={shipping}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={!ready}
-            />
-          )}
-        />
-
-        <Textarea
-          label="What you sell"
-          optional
-          rows={3}
-          placeholder="Handwoven bags and blankets, made in Nariño."
-          error={errors.description?.message}
-          {...register('description', {
-            maxLength: { value: 300, message: 'Keep it under 300 characters.' },
-          })}
-        />
-
-        <Controller
-          name="terms"
-          control={control}
-          rules={{ required: 'Accept the seller terms to open the shop.' }}
-          render={({ field }) => (
-            <Checkbox
-              label="I accept the seller terms and the commission on each sale."
-              checked={field.value}
-              onChange={field.onChange}
-              error={errors.terms?.message}
-            />
-          )}
-        />
-
-        <div className="flex gap-3">
-          <Button type="submit" variant="primary" loading={isSubmitting}>
-            Open shop
-          </Button>
-          <Button variant="secondary" type="reset">
-            Clear
-          </Button>
-        </div>
-      </form>
-    </div>
+    <p className="mt-7 flex items-start gap-2.5 text-[15px] text-ink">
+      <CheckCircleIcon className="mt-0.5 size-5 shrink-0 text-good" />
+      <span>
+        Your email is confirmed.
+        <span className="text-muted"> Listing items is not open yet.</span>
+      </span>
+    </p>
   )
 }
+
+const Sell = () => (
+  <div className="shell py-8 sm:py-12">
+    <div className="mx-auto max-w-2xl">
+      <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        Sell on Plaza
+      </h1>
+      <p className="mt-5 max-w-prose text-[15px] leading-relaxed text-muted">
+        List what you sell under your own name. Your username and your photo go on
+        every listing, and buyers deal with you directly. Confirming your email is
+        all it takes.
+      </p>
+
+      <StartSelling />
+
+      {/* The rule is the demotion. Everything above it is what Plaza asks people
+          to do; everything below it is the exception, and it reads smaller and
+          quieter for exactly that reason. */}
+      <section className="mt-12 border-t border-line pt-10">
+        <h2 className="font-display text-xl font-semibold text-ink">Shops</h2>
+        <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-muted">
+          A shop is optional. It gives what you sell its own name, logo and
+          storefront, and your listings are sold under it instead of under your
+          username. Shops are requested, and Plaza reviews each one before it opens.
+        </p>
+
+        <div className="mt-6">
+          <Button as={Link} to="/sell/shop" variant="outline" size="sm">
+            Request a shop
+          </Button>
+        </div>
+      </section>
+    </div>
+  </div>
+)
 
 export default Sell

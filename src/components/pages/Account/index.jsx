@@ -25,9 +25,11 @@ const Account = () => {
 
   if (loading && !me) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-4">
-        <div className="card h-28 animate-pulse" />
-        <div className="card h-56 animate-pulse" />
+      <div className="shell py-8 sm:py-10" aria-hidden>
+        <div className="mx-auto flex max-w-2xl flex-col gap-5">
+          <div className="panel h-28 animate-pulse" />
+          <div className="panel h-56 animate-pulse" />
+        </div>
       </div>
     )
   }
@@ -35,18 +37,20 @@ const Account = () => {
   if (!me) return null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-medium">Your account</h1>
-        <p className="mt-0.5 text-sm text-plaza-muted">
-          Signed in as {session?.email}
-        </p>
-      </div>
+    <div className="shell py-8 sm:py-10">
+      <div className="mx-auto flex max-w-2xl flex-col gap-5">
+        <div>
+          <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
+            Your account
+          </h1>
+          <p className="mt-4 text-sm text-muted">Signed in as {session?.email}</p>
+        </div>
 
-      <Verify me={me} onChange={apply} />
-      <Profile me={me} onChange={apply} />
-      <Email me={me} onChange={apply} />
-      <Password />
+        <Verify me={me} onChange={apply} />
+        <Profile me={me} onChange={apply} />
+        <Email me={me} onChange={apply} />
+        <Password />
+      </div>
     </div>
   )
 }

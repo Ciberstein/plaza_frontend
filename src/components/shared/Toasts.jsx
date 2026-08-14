@@ -3,10 +3,13 @@ import { XMarkIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import { subscribe } from '../../utils/notify'
 
+// Solid fills rather than tinted panels. A toast is drawn over whatever the
+// person was reading, and a tint lets the page underneath show through the
+// message that is trying to interrupt it.
 const TONES = {
-  error: 'border-plaza-alert bg-plaza-alert text-white',
-  success: 'border-plaza-action bg-plaza-action text-white',
-  info: 'border-plaza-line bg-plaza-surface text-plaza-ink',
+  error: 'bg-alert text-on-alert',
+  success: 'bg-good text-on-good',
+  info: 'bg-ink text-ground',
 }
 
 const LIFETIME = 6000
@@ -35,7 +38,9 @@ const Toasts = () => {
         <div
           key={toast.id}
           className={clsx(
-            'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-plaza border px-4 py-3 text-sm shadow-lg',
+            'pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-pz px-4 py-3.5',
+            'text-sm leading-relaxed shadow-[0_18px_45px_-12px_hsl(var(--pz-shadow)/0.5)]',
+            '[animation:pz-toast-in_260ms_var(--ease-pz)_both]',
             TONES[toast.tone] ?? TONES.info,
           )}
         >

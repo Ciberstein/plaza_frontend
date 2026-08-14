@@ -61,9 +61,9 @@ const Profile = ({ me, onChange }) => {
   }
 
   return (
-    <section className="card p-6">
-      <h2 className="text-lg font-medium">Profile</h2>
-      <p className="mt-0.5 text-sm text-plaza-muted">
+    <section className="panel p-6 sm:p-7">
+      <h2 className="font-display text-lg font-semibold text-ink">Profile</h2>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
         This is what buyers see next to anything you sell.
       </p>
 

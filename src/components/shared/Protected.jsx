@@ -12,7 +12,13 @@ const Protected = ({ children }) => {
   const { account, ready } = useAuth()
   const location = useLocation()
 
-  if (!ready) return <p className="text-sm text-plaza-muted">One moment…</p>
+  if (!ready) {
+    return (
+      <div className="shell py-20 text-center">
+        <p className="text-sm text-muted">One moment…</p>
+      </div>
+    )
+  }
 
   // The destination is remembered so they land where they were headed rather
   // than on the home page once they are in.

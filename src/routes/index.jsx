@@ -6,6 +6,7 @@ import Account from '../components/pages/Account'
 import Dashboard from '../components/pages/Dashboard'
 import Home from '../components/pages/Home'
 import Sell from '../components/pages/Sell'
+import ShopRequest from '../components/pages/Sell/ShopRequest'
 import Shop from '../components/pages/Shop'
 
 const router = createBrowserRouter([
@@ -17,7 +18,10 @@ const router = createBrowserRouter([
       { path: '/s/:slug', element: <Shop /> },
       { path: '/access', element: <Access /> },
       { path: '/account', element: <Protected><Account /></Protected> },
-      { path: '/sell', element: <Protected><Sell /></Protected> },
+      // Public on purpose: its main call to action for a signed-out visitor is
+      // to create an account, which a guard would make unreachable.
+      { path: '/sell', element: <Sell /> },
+      { path: '/sell/shop', element: <Protected><ShopRequest /></Protected> },
       { path: '/dashboard', element: <Protected><Dashboard /></Protected> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

@@ -20,6 +20,6 @@ const formatterFor = (currency) => {
 
 export const formatMoney = (amount, currency = 'COP') => {
   const value = Number(amount)
-  if (!Number.isFinite(value)) return '—'
+  if (!Number.isFinite(value)) return '-'
   return formatterFor(currency).format(value)
 }

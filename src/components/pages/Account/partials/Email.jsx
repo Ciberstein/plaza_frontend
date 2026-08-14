@@ -40,16 +40,20 @@ const Email = ({ me, onChange }) => {
   }
 
   return (
-    <section className="card p-6">
-      <h2 className="text-lg font-medium">Email</h2>
-      <p className="mt-0.5 text-sm text-plaza-muted">
-        Currently <span className="text-plaza-ink">{me.email}</span>
-        {!me.verified && ' — not confirmed yet'}
+    <section className="panel p-6 sm:p-7">
+      <h2 className="font-display text-lg font-semibold text-ink">Email</h2>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        Currently <span className="font-medium text-ink">{me.email}</span>
+        {!me.verified && (
+          <span className="ml-2 inline-block rounded-pz-sm bg-info px-1.5 py-0.5 align-middle text-[11px] font-semibold text-on-info">
+            Not confirmed
+          </span>
+        )}
       </p>
 
       {pending ? (
         <form onSubmit={confirm.handleSubmit(apply)} className="mt-5 flex flex-col gap-4">
-          <p className="text-sm text-plaza-ink">
+          <p className="text-sm text-ink">
             We sent a code to <strong>{pending}</strong>. Enter it to finish the change.
             Your current address keeps working until you do.
           </p>

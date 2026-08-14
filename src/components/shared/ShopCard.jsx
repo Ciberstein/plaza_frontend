@@ -5,22 +5,33 @@ import { ShopLogo } from '../ui'
  * One shop in the grid.
  *
  * Modelled on how a marketplace lists its stores rather than its products:
- * logo, name, one line of context. There is nothing to compare on price yet, so
- * the card stays short and the grid stays scannable.
+ * the mark takes the whole top of the tile and the text sits under it, left
+ * aligned. Centring all three lines was what made the old grid interchangeable
+ * — every card was the same symmetrical stack, so nothing about a shop reached
+ * the eye before the name was read.
+ *
+ * `index` only drives the entry delay, so the grid fills in reading order when
+ * the answer lands rather than appearing all at once.
  */
-const ShopCard = ({ shop, cityLabel, categoryLabel }) => (
-  <Link
-    to={`/s/${shop.slug}`}
-    className="card flex flex-col items-center gap-3 p-4 text-center transition-shadow hover:shadow-md"
-  >
-    <ShopLogo shop={shop} size="md" />
+const ShopCard = ({ shop, cityLabel, categoryLabel, index = 0 }) => {
+  const meta = [categoryLabel, cityLabel].filter(Boolean).join(' · ')
 
-    <span className="line-clamp-2 text-sm font-medium text-plaza-ink">{shop.name}</span>
+  return (
+    <Link
+      to={`/s/${shop.slug}`}
+      style={{ '--i': index }}
+      className="rise-in group flex flex-col overflow-hidden rounded-pz border border-line bg-surface transition-[transform,border-color] duration-200 ease-pz hover:-translate-y-0.5 hover:border-line-strong"
+    >
+      <ShopLogo shop={shop} size="fill" />
 
-    <span className="mt-auto text-xs text-plaza-muted">
-      {[categoryLabel, cityLabel].filter(Boolean).join(' · ')}
-    </span>
-  </Link>
-)
+      <span className="flex grow flex-col gap-1 border-t border-line p-3">
+        <span className="line-clamp-2 font-display text-[15px] leading-snug font-semibold text-ink">
+          {shop.name}
+        </span>
+        {meta && <span className="mt-auto text-xs text-faint">{meta}</span>}
+      </span>
+    </Link>
+  )
+}
 
 export default ShopCard

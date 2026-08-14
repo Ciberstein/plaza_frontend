@@ -17,17 +17,17 @@ const Checkbox = ({ label, id, hint, error, checked = false, onChange, disabled,
           onChange={onChange}
           disabled={disabled}
           className={clsx(
-            'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-plaza border bg-plaza-surface',
-            'transition-colors data-checked:border-plaza-action data-checked:bg-plaza-action',
-            'data-focus:ring-2 data-focus:ring-plaza-action/40',
-            'data-disabled:cursor-not-allowed data-disabled:bg-plaza-hover',
-            error ? 'border-plaza-alert' : 'border-plaza-line',
+            'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-pz-sm border bg-surface',
+            'transition-colors data-checked:border-accent data-checked:bg-accent',
+            'data-focus:ring-2 data-focus:ring-link/40',
+            'data-disabled:cursor-not-allowed data-disabled:bg-sunk',
+            error ? 'border-alert' : 'border-line',
           )}
         >
-          <CheckIcon className="size-3.5 text-white opacity-0 group-data-checked:opacity-100 data-checked:opacity-100" />
+          <CheckIcon className="size-3.5 text-on-accent opacity-0 group-data-checked:opacity-100 data-checked:opacity-100" />
         </HCheckbox>
 
-        <label htmlFor={boxId} className="cursor-pointer text-sm text-plaza-ink">
+        <label htmlFor={boxId} className="cursor-pointer text-sm text-ink">
           {label}
         </label>
       </div>

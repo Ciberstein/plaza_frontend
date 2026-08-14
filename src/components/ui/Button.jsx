@@ -1,20 +1,22 @@
 import clsx from 'clsx'
 
-// One blue carries every action. `primary` is the solid one, `secondary` the
-// same blue on a tint — that pairing is what marketplaces use for "buy now" and
-// "add to cart", where both are wanted but only one is the main path.
+// The amber fill is the action, and it takes dark text rather than white.
+// Amber is a light colour, and a page whose every button was a dark slab is
+// what made the last palette feel heavy. `secondary` is the same amber pulled
+// back to a tint, which is what a marketplace needs for the two actions it
+// shows together, where both are wanted but only one is the main path.
 const VARIANTS = {
-  primary: 'bg-plaza-action text-white hover:bg-plaza-action-deep border-transparent',
-  secondary: 'bg-plaza-action-tint text-plaza-action hover:bg-plaza-action-tint/70 border-transparent',
-  outline: 'bg-plaza-surface text-plaza-action border-plaza-action hover:bg-plaza-action-tint',
-  danger: 'bg-plaza-alert text-white hover:bg-plaza-alert/85 border-transparent',
-  ghost: 'bg-transparent text-plaza-action border-transparent hover:bg-plaza-action-tint',
+  primary: 'bg-accent text-on-accent border-transparent hover:bg-accent-deep',
+  secondary: 'bg-accent-tint text-link border-transparent hover:bg-accent-tint/60',
+  outline: 'bg-transparent text-ink border-line-strong hover:border-ink hover:bg-sunk',
+  danger: 'bg-alert text-on-alert border-transparent hover:brightness-110',
+  ghost: 'bg-transparent text-link border-transparent hover:bg-accent-tint',
 }
 
 const SIZES = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'h-9 px-3.5 text-[13px]',
+  md: 'h-11 px-5 text-sm',
+  lg: 'h-13 px-7 text-base',
 }
 
 /**
@@ -40,8 +42,11 @@ const Button = ({
       : { 'aria-disabled': disabled || loading || undefined })}
     aria-busy={loading || undefined}
     className={clsx(
-      'inline-flex items-center justify-center gap-2 rounded-plaza border font-medium',
-      'transition-colors disabled:cursor-not-allowed disabled:opacity-55',
+      'inline-flex shrink-0 items-center justify-center gap-2 rounded-pz-sm border',
+      'font-medium whitespace-nowrap transition-[background-color,border-color,transform,filter] duration-150',
+      // The press is a single pixel of travel. It is the cheapest way to make a
+      // control feel like it was pushed rather than merely repainted.
+      'active:translate-y-px disabled:pointer-events-none disabled:opacity-50',
       VARIANTS[variant] ?? VARIANTS.primary,
       SIZES[size] ?? SIZES.md,
       full && 'w-full',
