@@ -1,21 +1,42 @@
 import { createContext, use, useEffect, useState } from 'react'
 import meta from '../services/meta.services'
 
-const MetaContext = createContext({ categories: [], cities: [], shipping: [], ready: false })
+/**
+ * Every list the API can serve, empty.
+ *
+ * Declared once and spread under the response rather than trusted to arrive:
+ * the answer replaces this object wholesale, so a key the server does not send
+ * — an older deployment, a field added this week, a partial response — used to
+ * become `undefined` and take down the first component that mapped over it.
+ *
+ * A missing list is an empty list. That is a true statement in every one of
+ * those cases, and it is the difference between a form that renders without
+ * options and a page that will not render at all.
+ */
+const EMPTY = {
+  categories: [],
+  countries: [],
+  cities: [],
+  shipping: [],
+  conditions: [],
+  delivery: [],
+}
+
+const MetaContext = createContext({ ...EMPTY, ready: false })
 
 export const useMeta = () => use(MetaContext)
 
-// Fetched once for the whole app. Categories and cities are read by the header
-// strip, the browse filters and every seller form, and each of those asking for
-// its own copy would be four identical requests on one page load.
+// Fetched once for the whole app. Categories and cities are read by the header,
+// the browse filters and every seller form, and each of those asking for its
+// own copy would be four identical requests on one page load.
 export const MetaProvider = ({ children }) => {
-  const [value, setValue] = useState({ categories: [], cities: [], shipping: [], ready: false })
+  const [value, setValue] = useState({ ...EMPTY, ready: false })
 
   useEffect(() => {
     meta
       .index()
-      .then(data => setValue({ ...data, ready: true }))
-      .catch(() => setValue(v => ({ ...v, ready: true })))
+      .then(data => setValue({ ...EMPTY, ...data, ready: true }))
+      .catch(() => setValue({ ...EMPTY, ready: true }))
   }, [])
 
   return <MetaContext value={value}>{children}</MetaContext>

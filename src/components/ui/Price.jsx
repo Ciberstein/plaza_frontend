@@ -18,8 +18,10 @@ const SIZES = {
  * costing three thousand pesos and three million, and only a percentage stays
  * comparable across both.
  *
- * Both savings marks are orange rather than the customary green, because green
- * is the brand here and a badge painted in the brand colour reads as chrome.
+ * The discount is a marigold tag rather than marigold type. Marigold is the
+ * one colour on Plaza that carries attention, and at any size small enough to
+ * sit beside a price it does not hold contrast as text — so it is always the
+ * background, with ink on top.
  */
 const Price = ({ amount, was = null, currency = 'COP', size = 'md', freeShipping = false, className }) => {
   const discount = was && was > amount ? Math.round(((was - amount) / was) * 100) : null
@@ -27,22 +29,24 @@ const Price = ({ amount, was = null, currency = 'COP', size = 'md', freeShipping
   return (
     <div className={clsx('tabular flex flex-col gap-0.5', className)}>
       {was && (
-        <span className="text-xs text-plaza-faint line-through">
+        <span className="text-xs text-faint line-through">
           {formatMoney(was, currency)}
         </span>
       )}
 
       <span className="flex flex-wrap items-baseline gap-2">
-        <span className={clsx('font-light text-plaza-ink', SIZES[size] ?? SIZES.md)}>
+        <span className={clsx('font-display font-medium tracking-tight text-ink', SIZES[size] ?? SIZES.md)}>
           {formatMoney(amount, currency)}
         </span>
         {discount !== null && (
-          <span className="text-sm font-medium text-plaza-deal">{discount}% OFF</span>
+          <span className="rounded-pz-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-on-accent">
+            -{discount}%
+          </span>
         )}
       </span>
 
       {freeShipping && (
-        <span className="text-sm font-semibold text-plaza-deal">Free shipping</span>
+        <span className="text-sm font-semibold text-good">Free shipping</span>
       )}
     </div>
   )

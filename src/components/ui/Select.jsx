@@ -54,14 +54,13 @@ const Select = ({
           aria-invalid={error ? true : undefined}
           className={control({
             error: !!error,
-            disabled,
             extra: 'flex items-center justify-between gap-2 text-left',
           })}
         >
-          <span className={clsx('truncate', !selected && 'text-plaza-muted')}>
+          <span className={clsx('truncate', !selected && (disabled ? 'text-faint' : 'text-muted'))}>
             {selected?.label ?? placeholder}
           </span>
-          <ChevronUpDownIcon className="size-5 shrink-0 text-plaza-muted" />
+          <ChevronUpDownIcon className={clsx('size-5 shrink-0', disabled ? 'text-faint' : 'text-muted')} />
         </ListboxButton>
 
         {/* anchor keeps the panel pinned to the button through scroll, and
@@ -70,14 +69,14 @@ const Select = ({
           {options.map(opt => (
             <ListboxOption key={opt.value} value={opt.value} disabled={opt.disabled} className={option}>
               <span className="min-w-0">
-                <span className="block truncate group-data-selected:font-semibold group-data-selected:text-plaza-action">
+                <span className="block truncate group-data-selected:font-semibold group-data-selected:text-link">
                   {opt.label}
                 </span>
                 {opt.subtitle && (
-                  <span className="block truncate text-xs text-plaza-muted">{opt.subtitle}</span>
+                  <span className="block truncate text-xs text-muted">{opt.subtitle}</span>
                 )}
               </span>
-              <CheckIcon className="size-4 shrink-0 text-plaza-action opacity-0 group-data-selected:opacity-100" />
+              <CheckIcon className="size-4 shrink-0 text-link opacity-0 group-data-selected:opacity-100" />
             </ListboxOption>
           ))}
         </ListboxOptions>

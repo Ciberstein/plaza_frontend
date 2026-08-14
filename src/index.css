@@ -3,56 +3,133 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Plaza — design tokens
 
-   Built on the pattern language the big marketplaces share, because it is
-   learned behaviour for shoppers and inventing an alternative costs them time:
-   a flat colour band across the top with the search inside it, a light grey
-   page, white cards, one colour for every action, and one colour that only
-   ever means "this is good news for your wallet".
+   Azul, amarillo, rojo. Not as a flag stuck on a page, but as the meaning
+   system underneath it: cobalt is the brand and every action, yellow says
+   something is waiting on you, red says something failed. Green survives in
+   one place only, on money saved. Four colours, four jobs, no overlap.
 
-   Every value here was solved against a WCAG contrast target for the surface
-   it actually sits on, not chosen by eye. Six of the first draft's colours
-   failed, including the link green and the placeholder grey.
+   The neutrals carry a whisper of the cobalt rather than being plain grey.
+   That is the whole difference between a palette and a default: a page of
+   #f2f2f2 grey has no author, and the same page tinted toward its own brand
+   colour reads as designed without anyone being able to say why.
 
-   No metaphor, no texture, no decorative device. On a marketplace the product
-   photos are the only thing allowed to be colourful; everything else is chrome
-   and gets out of the way.
+   The cards are white, the page is nearly white, and the only large field of
+   colour in the interface is the header band. Every value is measured against
+   the surface it actually sits on.
    ────────────────────────────────────────────────────────────────────────────*/
 
-@theme {
-  /* Chrome. A deep green band with white text rather than a bright band with
-     dark text: bright is the shape every large marketplace already occupies,
-     and at this depth the header reads as retail without borrowing anyone's
-     colour. */
-  --color-plaza-band: #00703c;
-  --color-plaza-band-deep: #005c31;   /* the category row */
+button {
+  cursor: pointer;
+}
 
-  /* Surfaces */
-  --color-plaza-ground: #f0f0f0;      /* the page */
-  --color-plaza-surface: #ffffff;     /* cards, inputs, panels */
-  --color-plaza-line: #e0e0e0;        /* hairlines */
-  --color-plaza-hover: #f5f5f5;       /* row and option hover */
+@layer base {
+  
+  :root {
+    /* Light, and only light. The app used to follow the operating system and
+       repaint itself dark, which meant anyone on a dark-mode machine never saw
+       the palette below no matter what was in it. Plaza is a light interface;
+       if a dark one is ever wanted it should be a switch the person chooses,
+       not one their laptop chooses for them. */
+    color-scheme: light;
 
-  /* Text. Three levels, no more: a fourth grey is never distinguishable. */
-  --color-plaza-ink: #1a1a1a;
-  --color-plaza-muted: #696969;
-  --color-plaza-faint: #8f8f8f;
+    /* Surfaces. The page is a white pulled a few degrees toward the blue, so a
+       white card sitting on it still reads as a card. Plain grey would do the
+       same job and say nothing while doing it. */
+    --pz-ground: #f5f7fa;
+    --pz-surface: #ffffff;
+    --pz-sunk: #eef1f6;        /* row hover, inset wells, skeletons */
+    --pz-line: #e3e7ee;        /* hairlines */
+    --pz-line-strong: #c8cfdb; /* a border that has to be seen */
 
-  /* One green for every action: links, primary buttons, focus, selection. */
-  --color-plaza-action: #06713d;
-  --color-plaza-action-deep: #04512c;
-  --color-plaza-action-tint: #e8f3ed;
+    /* Text. Near-black with a blue cast rather than a dead neutral, so the type
+       belongs to the same page as everything else. `faint` is held at 4.6:1 on
+       white, which is where most light interfaces quietly fail. */
+    --pz-ink: #1a2032;
+    --pz-muted: #5a6274;
+    --pz-faint: #6d7486;
 
-  /* Money saved — free shipping, a discount. Orange rather than the usual
-     green, because green is now the brand and a badge in the brand colour
-     stops registering as a signal. Orange also carries the urgency a deal
-     wants. */
-  --color-plaza-deal: #bf510c;
+    /* Blue is the brand and the action: the band, buttons, links, focus, the
+       open category.
+       Held at 60% saturation rather than the 77% it started at. The band is the
+       largest single field of colour in the interface, and chroma that reads as
+       confident on a button reads as shouting across 1400 pixels. */
+    --pz-accent: #254c93;
+    --pz-accent-deep: #1c3b73;  /* the second row of the band */
+    --pz-accent-tint: #e9eef8;
+    --pz-on-accent: #ffffff;
 
-  /* The request failed, or the action destroys something. */
-  --color-plaza-alert: #c9302c;
-  --color-plaza-alert-tint: #fdecea;
+    /* The same blue, named for the places it is read as text rather than used
+       as a fill, so those call sites do not need to know it is the same. */
+    --pz-link: #254c93;
 
-  --radius-plaza: 0.375rem;
+    /* Money saved, and anything that worked. The only place green is allowed. */
+    --pz-good: #0f7350;
+    --pz-good-tint: #e4f1ea;
+    --pz-on-good: #ffffff;
+
+    /* Something is waiting on you: a shop in review, an email not confirmed.
+       Yellow is the one colour that means "look at this" without meaning "this
+       went wrong". Pulled back from a neon yellow to a gold, and always a fill
+       with near-black on top, because yellow cannot be read as text at any size
+       that fits inside a chip. */
+    --pz-info: #edaf1a;
+    --pz-info-tint: #fdf2d8;
+    --pz-on-info: #33260a;
+
+    /* The request failed, or the action destroys something. Muted to sit beside
+       the blue rather than fight it. */
+    --pz-alert: #c93b30;
+    --pz-alert-tint: #fbeae8;
+    --pz-on-alert: #ffffff;
+
+    --pz-shadow: 222deg 30% 15%;
+  }
+}
+
+@theme inline {
+  --color-ground: var(--pz-ground);
+  --color-surface: var(--pz-surface);
+  --color-sunk: var(--pz-sunk);
+  --color-line: var(--pz-line);
+  --color-line-strong: var(--pz-line-strong);
+
+  --color-ink: var(--pz-ink);
+  --color-muted: var(--pz-muted);
+  --color-faint: var(--pz-faint);
+
+  --color-accent: var(--pz-accent);
+  --color-accent-deep: var(--pz-accent-deep);
+  --color-accent-tint: var(--pz-accent-tint);
+  --color-on-accent: var(--pz-on-accent);
+
+  --color-link: var(--pz-link);
+
+  --color-good: var(--pz-good);
+  --color-good-tint: var(--pz-good-tint);
+  --color-on-good: var(--pz-on-good);
+
+  --color-info: var(--pz-info);
+  --color-info-tint: var(--pz-info-tint);
+  --color-on-info: var(--pz-on-info);
+
+  --color-alert: var(--pz-alert);
+  --color-alert-tint: var(--pz-alert-tint);
+  --color-on-alert: var(--pz-on-alert);
+
+  /* Two steps, and a rule for which is which: anything you can click *into*
+     (input, button, chip) takes the small one, anything that holds content
+     (panel, card, tile) takes the large one. */
+  --radius-pz-sm: 0.375rem;
+  --radius-pz: 0.625rem;
+
+  /* Bricolage sets the signage: the wordmark, page headings, prices, and the
+     letter on a shop's tile. It is never used below 15px, where its tight
+     apertures start closing up. Instrument Sans carries everything that has to
+     be read rather than seen. */
+  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Instrument Sans Variable", "Instrument Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+
+  --ease-pz: cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
 @layer base {
@@ -61,18 +138,31 @@
   }
 
   body {
-    @apply bg-plaza-ground text-plaza-ink antialiased;
-    font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    @apply bg-ground text-ink antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv05" 1;
   }
 
-  /* Prices, quantities and dates line their digits up without changing
-     typeface. A monospace price is a developer habit, not a shop's. */
+  /* Headings are the only place the display face appears in running layout, so
+     it is set here once rather than remembered at every call site. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.022em;
+    font-weight: 620;
+  }
+
+  /* Prices, codes and dates line their digits up without changing typeface. */
   table, .tabular {
     font-variant-numeric: tabular-nums;
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-plaza-action;
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  ::selection {
+    background-color: var(--pz-accent);
+    color: var(--pz-on-accent);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -85,10 +175,57 @@
   }
 }
 
-/* The shadow every card and panel uses. One elevation, applied consistently,
-   reads as a system; three arbitrary ones read as indecision. */
-@utility card {
-  background-color: var(--color-plaza-surface);
-  border-radius: var(--radius-plaza);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+/* One page width, one gutter, used by the header, the main column and every
+   full-bleed band so their contents line up down the whole page. */
+@utility shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 78rem;
+  padding-inline: 1rem;
+
+  @media (width >= 48rem) {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* A panel is a hairline and a white surface. The original design gave every
+   container a drop shadow, which on a page of twenty containers stops meaning
+   elevation and starts meaning nothing. Shadow is reserved for things that
+   genuinely float: the dropdown, the toast. */
+@utility panel {
+  background-color: var(--pz-surface);
+  border: 1px solid var(--pz-line);
+  border-radius: var(--radius-pz);
+}
+
+/* The section heading rule: short, green, the same green as everything else
+   that can be acted on. */
+@utility rule-accent {
+  &::after {
+    content: "";
+    display: block;
+    width: 2.25rem;
+    height: 3px;
+    margin-top: 0.625rem;
+    border-radius: 999px;
+    background-color: var(--pz-accent);
+  }
+}
+
+/* Cards enter as the answer arrives, in the order they will be read. The delay
+   is set per card from the index; anything past the twelfth lands immediately
+   rather than making the last row of a long grid wait. */
+@utility rise-in {
+  animation: pz-rise 420ms var(--ease-pz) both;
+  animation-delay: calc(min(var(--i, 0), 11) * 45ms);
+}
+
+@keyframes pz-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pz-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
 }

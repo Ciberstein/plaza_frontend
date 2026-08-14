@@ -24,9 +24,9 @@ const Password = () => {
   }
 
   return (
-    <section className="card p-6">
-      <h2 className="text-lg font-medium">Password</h2>
-      <p className="mt-0.5 text-sm text-plaza-muted">
+    <section className="panel p-6 sm:p-7">
+      <h2 className="font-display text-lg font-semibold text-ink">Password</h2>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
         A phrase you will remember beats a short password full of symbols.
       </p>
 
@@ -64,9 +64,9 @@ const Password = () => {
         />
 
         <div>
-          <Button type="submit" size="sm" loading={isSubmitting}>
+          <Button.Action type="submit" size="sm" loading={isSubmitting}>
             Change password
-          </Button>
+          </Button.Action>
         </div>
       </form>
     </section>

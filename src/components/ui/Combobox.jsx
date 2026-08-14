@@ -68,32 +68,35 @@ const Combobox = ({
           <ComboboxInput
             id={inputId}
             aria-invalid={error ? true : undefined}
-            className={control({ error: !!error, disabled, extra: 'pr-10' })}
+            className={control({ error: !!error, extra: 'pr-10' })}
             displayValue={() => selected?.label ?? ''}
             placeholder={placeholder}
             onChange={e => setQuery(e.target.value)}
           />
-          <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-2.5">
-            <ChevronUpDownIcon className="size-5 text-plaza-muted" />
+          <ComboboxButton
+            disabled={disabled}
+            className="absolute inset-y-0 right-0 flex items-center px-2.5 disabled:cursor-not-allowed"
+          >
+            <ChevronUpDownIcon className={clsx('size-5', disabled ? 'text-faint' : 'text-muted')} />
           </ComboboxButton>
         </div>
 
         <ComboboxOptions anchor="bottom" transition className={clsx(panel, 'w-(--input-width) origin-top transition duration-100 ease-out data-closed:scale-98 data-closed:opacity-0')}>
           {filtered.length === 0 ? (
             // An empty result is a dead end unless it says what to do next.
-            <p className="px-3 py-2 text-sm text-plaza-muted">{emptyMessage}</p>
+            <p className="px-3 py-2 text-sm text-muted">{emptyMessage}</p>
           ) : (
             filtered.map(opt => (
               <ComboboxOption key={opt.value} value={opt.value} disabled={opt.disabled} className={option}>
                 <span className="min-w-0">
-                  <span className="block truncate group-data-selected:font-semibold group-data-selected:text-plaza-action">
+                  <span className="block truncate group-data-selected:font-semibold group-data-selected:text-link">
                     {opt.label}
                   </span>
                   {opt.subtitle && (
-                    <span className="block truncate text-xs text-plaza-muted">{opt.subtitle}</span>
+                    <span className="block truncate text-xs text-muted">{opt.subtitle}</span>
                   )}
                 </span>
-                <CheckIcon className="size-4 shrink-0 text-plaza-action opacity-0 group-data-selected:opacity-100" />
+                <CheckIcon className="size-4 shrink-0 text-link opacity-0 group-data-selected:opacity-100" />
               </ComboboxOption>
             ))
           )}

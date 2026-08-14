@@ -24,9 +24,9 @@ const Verify = ({ me, onChange }) => {
 
   if (me.verified) {
     return (
-      <section className="card flex items-center gap-3 px-6 py-4">
-        <CheckCircleIcon className="size-5 shrink-0 text-plaza-action" />
-        <p className="text-sm text-plaza-ink">Your email is confirmed.</p>
+      <section className="flex items-center gap-3 rounded-pz border border-line bg-surface px-6 py-4">
+        <CheckCircleIcon className="size-5 shrink-0 text-good" />
+        <p className="text-sm text-ink">Your email is confirmed.</p>
       </section>
     )
   }
@@ -55,11 +55,11 @@ const Verify = ({ me, onChange }) => {
   }
 
   return (
-    <section className="card border-l-4 border-l-plaza-deal p-6">
-      <h2 className="text-lg font-medium">Confirm your email</h2>
-      <p className="mt-0.5 text-sm text-plaza-muted">
-        We sent a code to <span className="text-plaza-ink">{me.email}</span>. You can browse
-        and buy without this — confirming is what lets you sell.
+    <section className="rounded-pz border border-line border-l-[3px] border-l-info bg-surface p-6 sm:p-7">
+      <h2 className="font-display text-lg font-semibold text-ink">Confirm your email</h2>
+      <p className="mt-1 text-sm leading-relaxed text-muted">
+        We sent a code to <span className="font-medium text-ink">{me.email}</span>. You can
+        browse and buy without confirming. Confirming is what lets you sell.
       </p>
 
       <form onSubmit={handleSubmit(submit)} className="mt-5 flex flex-col gap-4 sm:max-w-xs">
@@ -76,12 +76,12 @@ const Verify = ({ me, onChange }) => {
         />
 
         <div className="flex gap-2">
-          <Button type="submit" size="sm" loading={isSubmitting}>
+          <Button.Action type="submit" size="sm" loading={isSubmitting}>
             Confirm
-          </Button>
-          <Button variant="ghost" size="sm" loading={sending} onClick={resend}>
+          </Button.Action>
+          <Button.Action variant="ghost" size="sm" loading={sending} onClick={resend}>
             Send another
-          </Button>
+          </Button.Action>
         </div>
       </form>
     </section>

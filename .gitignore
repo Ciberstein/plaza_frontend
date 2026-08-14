@@ -141,3 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Design notes and specs. Kept locally, never pushed: they are working
+# documents for whoever is building the thing, not part of the app.
+docs/
