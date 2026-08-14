@@ -19,6 +19,7 @@ const Confirm = ({
   loading = false,
   onConfirm,
   onCancel,
+  children,
 }) => (
   <Dialog open={open} onClose={loading ? () => {} : onCancel} className="relative z-100">
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-[2px]" aria-hidden />
@@ -33,6 +34,10 @@ const Confirm = ({
         </DialogTitle>
 
         <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
+
+        {/* Somewhere for the caller to ask one more thing before the deed:
+            a reason, a confirmation phrase. Absent by default. */}
+        {children && <div className="mt-4">{children}</div>}
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <Button.Action variant="ghost" onClick={onCancel} disabled={loading}>

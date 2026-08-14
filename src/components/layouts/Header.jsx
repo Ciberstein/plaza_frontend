@@ -13,6 +13,7 @@ import { CheckIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import { Link, NavLink, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/auth'
+import { useCart } from '../../context/cart'
 import { useMeta } from '../../context/meta'
 import { option, panel } from '../ui/styles'
 import { Avatar } from '../ui'
@@ -177,6 +178,15 @@ const Account = () => {
           </Link>
         </MenuItem>
         <MenuItem>
+          <Link to="/saved" className={option}>Saved</Link>
+        </MenuItem>
+        <MenuItem>
+          <Link to="/purchases" className={option}>Your purchases</Link>
+        </MenuItem>
+        <MenuItem>
+          <Link to="/sales" className={option}>Your sales</Link>
+        </MenuItem>
+        <MenuItem>
           <Link to="/listings" className={option}>Your listings</Link>
         </MenuItem>
         <MenuItem>
@@ -203,6 +213,27 @@ const secondary = ({ isActive }) =>
       : 'text-white/70 hover:bg-white/10 hover:text-white',
   )
 
+/** A basket you cannot see is one you forget you filled. */
+const Cart = () => {
+  const { count } = useCart()
+
+  return (
+    <NavLink
+      to="/cart"
+      className={clsx(link, 'relative size-10 items-center justify-center rounded-full!')}
+      aria-label={count ? `Cart, ${count} items` : 'Cart'}
+    >
+      <ShoppingBagIcon className="size-5" />
+
+      {count > 0 && (
+        <span className="tabular absolute -top-0.5 -right-0.5 flex min-w-5 items-center justify-center rounded-full bg-info px-1 text-[11px] font-bold text-on-info">
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </NavLink>
+  )
+}
+
 const Header = () => {
   return (
     // Solid, and the brand colour, the way a marketplace header is: it is the
@@ -218,13 +249,7 @@ const Header = () => {
 
         <div className="flex items-center gap-2">
           <Account />
-          <NavLink
-            to="/cart"
-            className={clsx(link, 'size-10 items-center justify-center rounded-full!')}
-            aria-label="Cart"
-          >
-            <ShoppingBagIcon className="size-5" />
-          </NavLink>
+          <Cart />
         </div>
       </div>
 

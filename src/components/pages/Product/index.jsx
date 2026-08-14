@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapPinIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 import { Avatar, Button, ShopLogo } from '../../ui'
+import { useAuth } from '../../../context/auth'
+import { useCart } from '../../../context/cart'
 import { useMeta } from '../../../context/meta'
+import { notify } from '../../../utils/notify'
+import orders from '../../../services/orders.services'
 import { formatMoney } from '../../../utils/money'
 import products from '../../../services/products.services'
 import { useResource } from '../../../hooks/useResource'
@@ -149,6 +153,105 @@ const Description = ({ text }) => {
   )
 }
 
+/**
+ * The two ways to buy, which are the same order arrived at differently.
+ *
+ * Buying now does not touch the basket. Someone who wanted one thing and got a
+ * basket badge for their trouble has been given homework, and a handmade item
+ * is usually bought one at a time.
+ */
+const Buy = ({ product }) => {
+  const { account, ready } = useAuth()
+  const { add } = useCart()
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+
+  // Both sides can be undefined, and in JavaScript that compares equal. Without
+  // the guard a signed-out visitor was told this was their own listing, which
+  // is checked before the sign-in branch and so won the screen.
+  const mine = Boolean(account?.id) && account.id === product.seller?.id
+  const paused = product.status === 'paused'
+  const gone = product.stock < 1
+
+  if (!ready) return <div className="h-11" aria-hidden />
+
+  if (mine) {
+    return (
+      <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
+        This is your own listing.
+      </p>
+    )
+  }
+
+  // Before the stock check and before the sign-in prompt: a paused listing is
+  // not a thing to sign in for, and the reason it cannot be bought is this one
+  // and not whatever is on the shelf.
+  if (paused) {
+    return (
+      <p className="rounded-pz border border-line border-l-[3px] border-l-info bg-sunk px-4 py-3 text-sm text-ink">
+        <span className="font-medium">The seller paused this listing.</span>{' '}
+        <span className="text-muted">
+          It is not for sale right now. Save it and you will have it here if it
+          comes back.
+        </span>
+      </p>
+    )
+  }
+
+  if (gone) {
+    return (
+      <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
+        None left right now.
+      </p>
+    )
+  }
+
+  // Signing in is the only thing in the way, so it is the only thing offered.
+  if (!account) {
+    return (
+      <Button.Action
+        as={Link}
+        to="/access"
+        state={{ from: `/p/${product.id}` }}
+        size="lg"
+        full
+      >
+        Sign in to buy
+      </Button.Action>
+    )
+  }
+
+  const buyNow = async () => {
+    setBusy(true)
+    try {
+      const order = await orders.place([{ productId: product.id, quantity: 1 }])
+      notify('Order placed. The seller has been asked to confirm.', 'success')
+      navigate(`/purchases#order-${order.id}`)
+    } catch {
+      // Reported by the interceptor, which names what ran out.
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Button.Action size="lg" full loading={busy} onClick={buyNow}>
+        Buy now
+      </Button.Action>
+
+      <Button.Action
+        variant="soft" size="lg" full disabled={busy}
+        // The context reports the outcome, success or refusal. Saying so here
+        // too would announce a success the request had not had yet.
+        onClick={() => add(product.id)}
+      >
+        Add to cart
+      </Button.Action>
+    </div>
+  )
+}
+
 const Product = () => {
   const { id } = useParams()
   const { cities, delivery: deliveryOptions } = useMeta()
@@ -214,7 +317,9 @@ const Product = () => {
             </p>
           </div>
 
-          <Seller product={product} />
+          <Buy product={product} />
+
+        <Seller product={product} />
 
           {ways.length > 0 && (
             <section>
