@@ -5,6 +5,8 @@ import Access from '../components/pages/Access'
 import Account from '../components/pages/Account'
 import Dashboard from '../components/pages/Dashboard'
 import Home from '../components/pages/Home'
+import Listings from '../components/pages/Listings'
+import ListingEditor from '../components/pages/Listings/Editor'
 import Sell from '../components/pages/Sell'
 import ShopRequest from '../components/pages/Sell/ShopRequest'
 import Shop from '../components/pages/Shop'
@@ -23,6 +25,11 @@ const router = createBrowserRouter([
       { path: '/sell', element: <Sell /> },
       { path: '/sell/shop', element: <Protected><ShopRequest /></Protected> },
       { path: '/dashboard', element: <Protected><Dashboard /></Protected> },
+      { path: '/listings', element: <Protected><Listings /></Protected> },
+      // One component for both: creating saves first and lands on the edit
+      // screen, because photos cannot attach to a row that does not exist.
+      { path: '/listings/new', element: <Protected><ListingEditor /></Protected> },
+      { path: '/listings/:id', element: <Protected><ListingEditor /></Protected> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

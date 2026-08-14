@@ -177,6 +177,9 @@ const Account = () => {
           </Link>
         </MenuItem>
         <MenuItem>
+          <Link to="/listings" className={option}>Your listings</Link>
+        </MenuItem>
+        <MenuItem>
           <Link to="/dashboard" className={option}>Your shops</Link>
         </MenuItem>
         <MenuItem>

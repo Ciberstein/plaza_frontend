@@ -41,13 +41,13 @@ const StartSelling = () => {
   }
 
   return (
-    <p className="mt-7 flex items-start gap-2.5 text-[15px] text-ink">
-      <CheckCircleIcon className="mt-0.5 size-5 shrink-0 text-good" />
-      <span>
+    <div className="mt-7">
+      <Button as={Link} to="/listings/new" size="lg">List an item</Button>
+      <p className="mt-3 flex items-center gap-2 text-sm text-muted">
+        <CheckCircleIcon className="size-4 shrink-0 text-good" />
         Your email is confirmed.
-        <span className="text-muted"> Listing items is not open yet.</span>
-      </span>
-    </p>
+      </p>
+    </div>
   )
 }
 
