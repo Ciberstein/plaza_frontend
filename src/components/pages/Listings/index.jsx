@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { PhotoIcon } from '@heroicons/react/24/outline'
-import { Button } from '../../ui'
+import { Button, Confirm } from '../../ui'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
 import products from '../../../services/products.services'
@@ -22,6 +22,11 @@ const STATUS = {
     tone: 'bg-good-tint text-good',
     note: null,
   },
+  paused: {
+    label: 'Paused',
+    tone: 'bg-sunk text-muted',
+    note: 'Hidden by you. Set it back to available on the listing itself.',
+  },
   out_of_stock: {
     label: 'Out of stock',
     tone: 'bg-info-tint text-ink',
@@ -40,6 +45,9 @@ const Listings = () => {
 
   const [list, setList] = useState(null)
   const [busy, setBusy] = useState(null)
+  // The listing waiting on an answer, not a boolean: the dialog needs its title
+  // to say which one is about to go.
+  const [deleting, setDeleting] = useState(null)
 
   const rows = list ?? data ?? []
 
@@ -57,23 +65,38 @@ const Listings = () => {
     }
   }
 
+  const remove = async () => {
+    setBusy(deleting.id)
+    try {
+      await products.remove(deleting.id)
+      setList(rows.filter(row => row.id !== deleting.id))
+      notify(`${deleting.title} was deleted.`, 'success')
+      setDeleting(null)
+    } catch {
+      // Reported by the interceptor. The dialog stays open so the person can
+      // see what happened without the row vanishing underneath them.
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const actions = (product) => {
     const working = busy === product.id
 
-    if (product.status === 'active' || product.status === 'out_of_stock') {
+    if (['active', 'paused', 'out_of_stock'].includes(product.status)) {
       return (
-        <Button variant="ghost" size="sm" loading={working}
+        <Button.Action variant="ghost" size="sm" loading={working}
           onClick={() => run(product, 'archive', p => `${p.title} was archived.`)}>
           Archive
-        </Button>
+        </Button.Action>
       )
     }
 
     return (
-      <Button size="sm" loading={working}
+      <Button.Action size="sm" loading={working}
         onClick={() => run(product, 'publish', p => `${p.title} is live.`)}>
         Publish
-      </Button>
+      </Button.Action>
     )
   }
 
@@ -88,7 +111,7 @@ const Listings = () => {
             Everything you sell, under your own name or under one of your shops.
           </p>
         </div>
-        <Button as={Link} to="/listings/new" size="sm">List an item</Button>
+        <Button.Action as={Link} to="/listings/new" size="sm">List an item</Button.Action>
       </div>
 
       <div className="mt-8">
@@ -111,7 +134,7 @@ const Listings = () => {
               A listing needs a photo, a price and a category. It stays a draft until
               you publish it.
             </p>
-            <Button as={Link} to="/listings/new" size="sm" className="mt-1">List an item</Button>
+            <Button.Action as={Link} to="/listings/new" size="sm" className="mt-1">List an item</Button.Action>
           </div>
         ) : (
           <ul className="panel divide-y divide-line">
@@ -158,11 +181,17 @@ const Listings = () => {
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
-                      <Button as={Link} to={`/listings/${product.id}`} variant="outline" size="sm">
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button.Action as={Link} to={`/listings/${product.id}`} variant="outline" color="neutral" size="sm">
                         Edit
-                      </Button>
+                      </Button.Action>
                       {actions(product)}
+                      <Button.Action
+                        variant="ghost" color="danger" size="sm"
+                        onClick={() => setDeleting(product)}
+                      >
+                        Delete
+                      </Button.Action>
                     </div>
                   </div>
 
@@ -175,6 +204,16 @@ const Listings = () => {
           </ul>
         )}
       </div>
+
+      <Confirm
+        open={Boolean(deleting)}
+        title={`Delete ${deleting?.title ?? 'this listing'}?`}
+        body="The listing and its photos go for good. Anything already sold keeps its record. To take it off the square without losing it, archive it instead."
+        confirmLabel="Delete listing"
+        loading={busy === deleting?.id}
+        onConfirm={remove}
+        onCancel={() => setDeleting(null)}
+      />
     </div>
   )
 }

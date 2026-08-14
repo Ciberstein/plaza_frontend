@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import Field from './Field'
-import { control } from './styles'
+import { control, readable } from './styles'
 
 const Textarea = ({ label, id, optional, hint, error, className, rows = 4, ...props }) => {
   const auto = useId()
@@ -19,7 +19,7 @@ const Textarea = ({ label, id, optional, hint, error, className, rows = 4, ...pr
         id={areaId}
         rows={rows}
         aria-invalid={error ? true : undefined}
-        className={control({ error: !!error, disabled: props.disabled, extra: 'resize-y' })}
+        className={control({ error: !!error, extra: `resize-y ${readable}` })}
         {...props}
       />
     </Field>

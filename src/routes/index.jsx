@@ -9,7 +9,9 @@ import Listings from '../components/pages/Listings'
 import ListingEditor from '../components/pages/Listings/Editor'
 import Sell from '../components/pages/Sell'
 import ShopRequest from '../components/pages/Sell/ShopRequest'
+import Product from '../components/pages/Product'
 import Shop from '../components/pages/Shop'
+import Shops from '../components/pages/Shops'
 
 const router = createBrowserRouter([
   {
@@ -17,6 +19,9 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/c/:category', element: <Home /> },
+      { path: '/p/:id', element: <Product /> },
+      // The directory the home page used to be. Reached on purpose now.
+      { path: '/shops', element: <Shops /> },
       { path: '/s/:slug', element: <Shop /> },
       { path: '/access', element: <Access /> },
       { path: '/account', element: <Protected><Account /></Protected> },

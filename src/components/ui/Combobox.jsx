@@ -68,13 +68,16 @@ const Combobox = ({
           <ComboboxInput
             id={inputId}
             aria-invalid={error ? true : undefined}
-            className={control({ error: !!error, disabled, extra: 'pr-10' })}
+            className={control({ error: !!error, extra: 'pr-10' })}
             displayValue={() => selected?.label ?? ''}
             placeholder={placeholder}
             onChange={e => setQuery(e.target.value)}
           />
-          <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-2.5">
-            <ChevronUpDownIcon className="size-5 text-muted" />
+          <ComboboxButton
+            disabled={disabled}
+            className="absolute inset-y-0 right-0 flex items-center px-2.5 disabled:cursor-not-allowed"
+          >
+            <ChevronUpDownIcon className={clsx('size-5', disabled ? 'text-faint' : 'text-muted')} />
           </ComboboxButton>
         </div>
 

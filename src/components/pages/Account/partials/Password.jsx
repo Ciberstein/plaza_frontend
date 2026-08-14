@@ -64,9 +64,9 @@ const Password = () => {
         />
 
         <div>
-          <Button type="submit" size="sm" loading={isSubmitting}>
+          <Button.Action type="submit" size="sm" loading={isSubmitting}>
             Change password
-          </Button>
+          </Button.Action>
         </div>
       </form>
     </section>

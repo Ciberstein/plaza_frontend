@@ -141,12 +141,12 @@ const ShopRequest = () => {
           />
 
           <div className="flex flex-wrap gap-3 border-t border-line pt-6">
-            <Button type="submit" variant="primary" loading={isSubmitting}>
+            <Button.Action type="submit" loading={isSubmitting}>
               Save request
-            </Button>
-            <Button variant="ghost" type="reset">
+            </Button.Action>
+            <Button.Action variant="ghost" type="reset">
               Clear the form
-            </Button>
+            </Button.Action>
           </div>
         </form>
       </div>

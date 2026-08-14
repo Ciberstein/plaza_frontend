@@ -71,13 +71,13 @@ const Profile = ({ me, onChange }) => {
         <Avatar account={me} size="lg" />
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" loading={busy} onClick={() => fileInput.current?.click()}>
+          <Button.Action variant="soft" size="sm" loading={busy} onClick={() => fileInput.current?.click()}>
             {me.avatar ? 'Change photo' : 'Upload photo'}
-          </Button>
+          </Button.Action>
           {me.avatar && (
-            <Button variant="ghost" size="sm" disabled={busy} onClick={removePhoto}>
+            <Button.Action variant="ghost" size="sm" disabled={busy} onClick={removePhoto}>
               Remove
-            </Button>
+            </Button.Action>
           )}
           {/* The native control is hidden rather than styled: it cannot be
               restyled reliably across browsers, and a button that opens it
@@ -106,9 +106,9 @@ const Profile = ({ me, onChange }) => {
         />
 
         <div>
-          <Button type="submit" size="sm" loading={isSubmitting} disabled={!isDirty}>
+          <Button.Action type="submit" size="sm" loading={isSubmitting} disabled={!isDirty}>
             Save name
-          </Button>
+          </Button.Action>
         </div>
       </form>
     </section>

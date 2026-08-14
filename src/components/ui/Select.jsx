@@ -54,14 +54,13 @@ const Select = ({
           aria-invalid={error ? true : undefined}
           className={control({
             error: !!error,
-            disabled,
             extra: 'flex items-center justify-between gap-2 text-left',
           })}
         >
-          <span className={clsx('truncate', !selected && 'text-muted')}>
+          <span className={clsx('truncate', !selected && (disabled ? 'text-faint' : 'text-muted'))}>
             {selected?.label ?? placeholder}
           </span>
-          <ChevronUpDownIcon className="size-5 shrink-0 text-muted" />
+          <ChevronUpDownIcon className={clsx('size-5 shrink-0', disabled ? 'text-faint' : 'text-muted')} />
         </ListboxButton>
 
         {/* anchor keeps the panel pinned to the button through scroll, and

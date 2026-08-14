@@ -122,9 +122,9 @@ const Access = ({ mode = 'login' }) => {
               })}
             />
 
-            <Button type="submit" full loading={isSubmitting} className="mt-1">
+            <Button.Action type="submit" full loading={isSubmitting} className="mt-1">
               {creating ? 'Create account' : 'Sign in'}
-            </Button>
+            </Button.Action>
           </form>
 
           <p className="mt-6 border-t border-line pt-5 text-sm text-muted">

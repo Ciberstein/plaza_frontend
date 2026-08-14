@@ -24,7 +24,7 @@ const StartSelling = () => {
   if (!account) {
     return (
       <div className="mt-7">
-        <Button as={Link} to="/access" size="lg">Create an account</Button>
+        <Button.Action as={Link} to="/access" size="lg">Create an account</Button.Action>
       </div>
     )
   }
@@ -32,7 +32,7 @@ const StartSelling = () => {
   if (!account.verified) {
     return (
       <div className="mt-7">
-        <Button as={Link} to="/account" size="lg">Confirm your email</Button>
+        <Button.Action as={Link} to="/account" size="lg">Confirm your email</Button.Action>
         <p className="mt-3 text-sm text-muted">
           We sent a code to {account.email}.
         </p>
@@ -42,7 +42,7 @@ const StartSelling = () => {
 
   return (
     <div className="mt-7">
-      <Button as={Link} to="/listings/new" size="lg">List an item</Button>
+      <Button.Action as={Link} to="/listings/new" size="lg">List an item</Button.Action>
       <p className="mt-3 flex items-center gap-2 text-sm text-muted">
         <CheckCircleIcon className="size-4 shrink-0 text-good" />
         Your email is confirmed.
@@ -77,9 +77,9 @@ const Sell = () => (
         </p>
 
         <div className="mt-6">
-          <Button as={Link} to="/sell/shop" variant="outline" size="sm">
+          <Button.Action as={Link} to="/sell/shop" variant="outline" color="neutral" size="sm">
             Request a shop
-          </Button>
+          </Button.Action>
         </div>
       </section>
     </div>

@@ -17,6 +17,9 @@ const products = {
   publish: (id) => api.post(`${API_ROUTES.USER}/products/${id}/publish`).then(r => r.data),
   archive: (id) => api.post(`${API_ROUTES.USER}/products/${id}/archive`).then(r => r.data),
 
+  // Gone rather than put away. Answers 204, so there is nothing to unwrap.
+  remove: (id) => api.delete(`${API_ROUTES.USER}/products/${id}`).then(() => id),
+
   // One file per request, the way the avatar and the shop logo already work.
   addImage: (id, file) => {
     const body = new FormData()

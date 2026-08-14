@@ -76,12 +76,12 @@ const Verify = ({ me, onChange }) => {
         />
 
         <div className="flex gap-2">
-          <Button type="submit" size="sm" loading={isSubmitting}>
+          <Button.Action type="submit" size="sm" loading={isSubmitting}>
             Confirm
-          </Button>
-          <Button variant="ghost" size="sm" loading={sending} onClick={resend}>
+          </Button.Action>
+          <Button.Action variant="ghost" size="sm" loading={sending} onClick={resend}>
             Send another
-          </Button>
+          </Button.Action>
         </div>
       </form>
     </section>

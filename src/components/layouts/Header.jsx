@@ -234,7 +234,7 @@ const Header = () => {
       <nav aria-label="Sections" className="bg-accent-deep">
         <ul className="shell flex items-center gap-1 overflow-x-auto py-1.5 scrollbar-none [&::-webkit-scrollbar]:hidden">
           <li>
-            <NavLink to="/" end className={secondary}>Shops</NavLink>
+            <NavLink to="/shops" className={secondary}>Shops</NavLink>
           </li>
           <li>
             <NavLink to="/sell" className={secondary}>Sell on Plaza</NavLink>

@@ -29,6 +29,9 @@ export const Public = () => (
           <Link to="/sell" className="w-fit font-medium text-link hover:underline">
             Sell on Plaza
           </Link>
+          <Link to="/shops" className="w-fit text-muted transition-colors hover:text-ink">
+            Shops
+          </Link>
           <Link to="/account" className="w-fit text-muted transition-colors hover:text-ink">
             Your account
           </Link>

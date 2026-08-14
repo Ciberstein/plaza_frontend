@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { MapPinIcon, TruckIcon } from '@heroicons/react/20/solid'
 import { Button, ShopLogo } from '../../ui'
 import { useMeta } from '../../../context/meta'
+import ProductCard from '../../shared/ProductCard'
+import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
 import { useResource } from '../../../hooks/useResource'
 
@@ -27,6 +29,14 @@ const Shop = () => {
   const load = useCallback(() => shops.storefront(slug), [slug])
   const { data: shop, error, loading } = useResource(load, slug)
 
+  // Asked for separately, and only once the shop resolved: the catalogue is
+  // keyed by the shop's id, which the slug in the URL does not carry.
+  const loadStock = useCallback(
+    () => (shop ? products.browse({ shopId: shop.id }) : Promise.resolve([])),
+    [shop],
+  )
+  const { data: stock, loading: loadingStock } = useResource(loadStock, String(shop?.id ?? ''))
+
   if (loading) {
     return (
       <div className="shell py-8 sm:py-10" aria-hidden>
@@ -50,7 +60,7 @@ const Shop = () => {
           <p className="text-sm leading-relaxed text-muted">
             It may have closed, or the link may be wrong.
           </p>
-          <Button as={Link} to="/" variant="outline" size="sm">Back to Plaza</Button>
+          <Button.Action as={Link} to="/" variant="outline" color="neutral" size="sm">Back to Plaza</Button.Action>
         </div>
       </div>
     )
@@ -85,9 +95,29 @@ const Shop = () => {
       <section>
         <h2 className="rule-accent font-display text-xl font-semibold text-ink">Products</h2>
 
-        <div className="panel mt-6 px-6 py-16 text-center">
-          <p className="text-sm text-muted">This shop has not listed anything yet.</p>
-        </div>
+        {loadingStock ? (
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" aria-hidden>
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="overflow-hidden rounded-pz border border-line bg-surface">
+                <div className="aspect-square animate-pulse bg-sunk" />
+                <div className="flex flex-col gap-2 p-3">
+                  <div className="h-4 w-24 animate-pulse rounded-full bg-sunk" />
+                  <div className="h-3 w-4/5 animate-pulse rounded-full bg-sunk" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (stock ?? []).length === 0 ? (
+          <div className="panel mt-6 px-6 py-16 text-center">
+            <p className="text-sm text-muted">This shop has not listed anything yet.</p>
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {stock.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

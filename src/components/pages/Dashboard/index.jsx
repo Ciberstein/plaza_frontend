@@ -87,36 +87,36 @@ const Dashboard = () => {
       case 'draft':
       case 'rejected':
         return (
-          <Button size="sm" loading={working}
+          <Button.Action size="sm" loading={working}
             onClick={() => run(shop, 'submit', s => `${s.name} was sent for review.`)}>
             Send for review
-          </Button>
+          </Button.Action>
         )
       case 'pending':
         return (
-          <Button variant="outline" size="sm" loading={working}
+          <Button.Action variant="outline" color="neutral" size="sm" loading={working}
             onClick={() => run(shop, 'withdraw', s => `${s.name} was taken out of the queue.`)}>
             Withdraw
-          </Button>
+          </Button.Action>
         )
       case 'active':
         return (
           <>
-            <Button variant="outline" size="sm" as={Link} to={`/s/${shop.slug}`}>
+            <Button.Action variant="outline" color="neutral" size="sm" as={Link} to={`/s/${shop.slug}`}>
               View storefront
-            </Button>
-            <Button variant="ghost" size="sm" loading={working}
+            </Button.Action>
+            <Button.Action variant="ghost" size="sm" loading={working}
               onClick={() => run(shop, 'close', s => `${s.name} is closed.`)}>
               Close
-            </Button>
+            </Button.Action>
           </>
         )
       case 'closed':
         return (
-          <Button size="sm" loading={working}
+          <Button.Action size="sm" loading={working}
             onClick={() => run(shop, 'reopen', s => `${s.name} is open again.`)}>
             Open again
-          </Button>
+          </Button.Action>
         )
       default:
         // Suspended. Nothing for the seller to do from here, by design.
@@ -136,7 +136,7 @@ const Dashboard = () => {
             and Plaza reviews it before it opens.
           </p>
         </div>
-        <Button as={Link} to="/sell/shop" size="sm">Request a shop</Button>
+        <Button.Action as={Link} to="/sell/shop" size="sm">Request a shop</Button.Action>
       </div>
 
       <div className="mt-8">
@@ -158,7 +158,7 @@ const Dashboard = () => {
             <p className="max-w-sm text-sm leading-relaxed text-muted">
               A shop gives what you sell a name and a storefront of its own.
             </p>
-            <Button as={Link} to="/sell/shop" size="sm" className="mt-1">Request a shop</Button>
+            <Button.Action as={Link} to="/sell/shop" size="sm" className="mt-1">Request a shop</Button.Action>
           </div>
         ) : (
           // One panel with rules between the rows, rather than a stack of

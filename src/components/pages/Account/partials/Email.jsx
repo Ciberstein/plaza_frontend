@@ -71,12 +71,12 @@ const Email = ({ me, onChange }) => {
           />
 
           <div className="flex gap-2">
-            <Button type="submit" size="sm" loading={confirm.formState.isSubmitting}>
+            <Button.Action type="submit" size="sm" loading={confirm.formState.isSubmitting}>
               Confirm change
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setPending(null)}>
+            </Button.Action>
+            <Button.Action variant="ghost" size="sm" onClick={() => setPending(null)}>
               Cancel
-            </Button>
+            </Button.Action>
           </div>
         </form>
       ) : (
@@ -99,9 +99,9 @@ const Email = ({ me, onChange }) => {
           />
 
           <div>
-            <Button type="submit" size="sm" loading={request.formState.isSubmitting}>
+            <Button.Action type="submit" size="sm" loading={request.formState.isSubmitting}>
               Send code
-            </Button>
+            </Button.Action>
           </div>
         </form>
       )}
