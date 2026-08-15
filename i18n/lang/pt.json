@@ -720,7 +720,6 @@
   "Shared.Combobox.Remove": "Remover {{label}}",
   "Properties.Filters.Condition": "Estado",
   "Properties.Filters.AnyCondition": "Qualquer estado",
-  "Properties.Filters.TypeHint": "Você pode escolher vários.",
   "Members.Title": "Quem trabalha aqui",
   "Members.Intro": "Um colaborador publica, edita e arquiva todo o catálogo da loja, responde perguntas e visitas e cuida das vendas. Excluir um anúncio continua sendo de quem o criou, ou seu.",
   "Members.IntroMember": "Você trabalha nesta loja. Pode anunciar em seu nome, editar qualquer anúncio e atender seus compradores.",

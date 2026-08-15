@@ -720,7 +720,6 @@
   "Shared.Combobox.Remove": "Quitar {{label}}",
   "Properties.Filters.Condition": "Estado",
   "Properties.Filters.AnyCondition": "Cualquier estado",
-  "Properties.Filters.TypeHint": "Puedes elegir varios.",
   "Members.Title": "Quién trabaja aquí",
   "Members.Intro": "Un colaborador publica, edita y archiva todo el catálogo de la tienda, responde preguntas y visitas, y gestiona las ventas. Borrar una publicación sigue siendo de quien la creó, o tuya.",
   "Members.IntroMember": "Trabajas en esta tienda. Puedes publicar bajo su nombre, editar cualquier publicación y atender a sus compradores.",

@@ -720,7 +720,6 @@
   "Shared.Combobox.Remove": "Remove {{label}}",
   "Properties.Filters.Condition": "Condition",
   "Properties.Filters.AnyCondition": "Any condition",
-  "Properties.Filters.TypeHint": "You can pick several.",
   "Members.Title": "Who works here",
   "Members.Intro": "A collaborator publishes, edits and archives the whole shop catalogue, answers questions and visits, and handles sales. Deleting a listing stays with whoever created it, or with you.",
   "Members.IntroMember": "You work in this shop. You can list under its name, edit any listing and deal with its buyers.",
