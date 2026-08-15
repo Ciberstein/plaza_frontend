@@ -207,6 +207,58 @@ on their own listing and in their inbox.
 
 ---
 
+### Properties
+
+A third aisle, at `/properties`, with a page of its own rather than the home
+grid under another `kind` — because the filters are the feature. Somebody
+buying a shirt browses; somebody looking for somewhere to live is narrowing
+eleven axes at once and arrives knowing most of the answers already.
+
+Every filter lives in the query string, which is what makes a narrowed search
+shareable and survivable by the back button.
+
+**`ListingCard` dispatches on kind, and every grid uses it.** Three grids were
+drawing whatever they were handed with the goods card: `/saved` holds whatever
+anybody saved, a shop's showcase holds whatever that shop lists, and
+`/c/vivienda-apartamento` reaches the home grid because a category slug is
+unique across all three trees. Each would have drawn a flat as though it were a
+shirt. One dispatch in one file beats the same conditional written into three
+call sites and forgotten in the fourth.
+
+`PropertyCard` is a component rather than a branch inside `ProductCard`: almost
+nothing the two show is the same. A shirt's card answers what it is and what
+condition it is in; a property's answers how much, how big, how many rooms and
+which neighbourhood, and somebody scanning forty of them is comparing those
+four numbers down a column.
+
+**Nothing about a property reaches a basket.** The listing page swaps the buy
+button for `VisitRequest`, and the server refuses the basket and the order
+endpoints anyway — the missing button is a courtesy, not the control.
+
+**The address and the phone are trimmed on the server.** What arrives is what
+may be shown. There is no "hide it in the interface" path, here or on `/saved`,
+which carries the same trimming for the same reason: a saved listing is no more
+private than a browsed one.
+
+### Shops with more than one person
+
+`shops.mine()` returns owned and joined shops in one list, with `mine` on each
+row saying which. That is why the listing editor's shop picker needed no
+change — it already asked for "shops I may trade under" and the answer simply
+got wider. It shows "you collaborate here" as the subtitle so nobody publishes
+under somebody else's brand without noticing.
+
+The roster lives on the dashboard, inside the shop it belongs to, rather than on
+a screen of its own. A collaborator sees it read-only; the panel decides that
+from the `owned` flag the server sends, rather than the dashboard hiding a
+button it would have to keep in step.
+
+Invitations are a page of their own, at `/invitations`, and that is not
+arbitrary: until you accept one, the shop is not yours to read, so "what am I
+being asked to join" cannot be a question about a shop you cannot open. The
+badge counts them once per session — an invitation is not urgent, and a badge
+that costs a request every few seconds is one nobody agreed to pay for.
+
 ## Two things that are true and easy to get wrong
 
 **A missing list is an empty list.** `MetaProvider` spreads the API response

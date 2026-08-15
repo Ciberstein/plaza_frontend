@@ -11,6 +11,7 @@ import {
 import { ChevronDownIcon, GlobeAltIcon, MagnifyingGlassIcon, ShoppingBagIcon } from '@heroicons/react/24/outline'
 import { CheckIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/auth'
@@ -20,6 +21,7 @@ import { useMeta } from '../../context/meta'
 import { option, panel } from '../ui/styles'
 import { Avatar } from '../ui'
 import { withCategoryLabels } from '../../utils/vocabulary'
+import members from '../../services/members.services'
 
 /**
  * The wordmark, sitting on the band rather than on the page.
@@ -67,7 +69,7 @@ const Search = () => {
   // The open category comes from the URL rather than from state, so the picker
   // still shows the right thing after a reload or a back button.
   const match = useMatch('/c/:category')
-  const onServices = useMatch('/servicios')
+  const onServices = useMatch('/services')
   const slug = match?.params.category ?? null
   const q = params.get('q')?.trim() ?? ''
 
@@ -77,7 +79,7 @@ const Search = () => {
   // of which cannot hold what you are looking at, is not a picker.
   const aisle = all.find(c => c.slug === slug)?.kind ?? (onServices ? 'service' : 'good')
   const categories = all.filter(c => c.kind === aisle)
-  const root = aisle === 'service' ? '/servicios' : '/'
+  const root = aisle === 'service' ? '/services' : '/'
 
   const go = (nextSlug, query) => {
     const search = query ? `?q=${encodeURIComponent(query)}` : ''
@@ -162,6 +164,29 @@ const Account = () => {
   const { account, ready, signOut } = useAuth()
   const navigate = useNavigate()
 
+  // How many shops are waiting on an answer. Asked once per session rather
+  // than polled: an invitation is not urgent, and a badge that costs a request
+  // every few seconds is a badge nobody agreed to pay for.
+  const [pendingInvitations, setPendingInvitations] = useState(0)
+
+  useEffect(() => {
+    // No reset on the way out: signing out unmounts the menu entirely, so
+    // there is nothing left holding a stale count. Setting state here instead
+    // would be a synchronous setState in an effect body — a cascading render
+    // to clear something nobody can see.
+    if (!account) return
+
+    let ignore = false
+    members
+      .invitations()
+      .then(rows => { if (!ignore) setPendingInvitations(rows.length) })
+      // Quiet on purpose: a failure here costs one missing badge, and a toast
+      // about it would be the header complaining at somebody who did nothing.
+      .catch(() => { if (!ignore) setPendingInvitations(0) })
+
+    return () => { ignore = true }
+  }, [account])
+
   const out = async () => {
     await signOut()
     navigate('/')
@@ -208,6 +233,22 @@ const Account = () => {
         </MenuItem>
         <MenuItem>
           <Link to="/questions" className={option}>{t('Header.Account.Questions')}</Link>
+        </MenuItem>
+        <MenuItem>
+          <Link to="/visits" className={option}>{t('Visits.Title')}</Link>
+        </MenuItem>
+        <MenuItem>
+          <Link to="/invitations" className={clsx(option, 'flex items-center justify-between gap-2')}>
+            {t('Invitations.Title')}
+            {/* Only when there is a reason to look. A badge reading zero is
+                worse than no badge — it is a control that trained you to
+                ignore it. */}
+            {pendingInvitations > 0 && (
+              <span className="rounded-full bg-alert px-1.5 py-0.5 text-[11px] font-semibold text-on-alert">
+                {pendingInvitations}
+              </span>
+            )}
+          </Link>
         </MenuItem>
         <MenuItem>
           <Link to="/listings" className={option}>{t('Header.Account.YourListings')}</Link>
@@ -344,7 +385,10 @@ const Header = () => {
             <NavLink to="/" end className={secondary}>{t('Common.Products')}</NavLink>
           </li>
           <li>
-            <NavLink to="/servicios" className={secondary}>{t('Common.Services')}</NavLink>
+            <NavLink to="/services" className={secondary}>{t('Common.Services')}</NavLink>
+          </li>
+          <li>
+            <NavLink to="/properties" className={secondary}>{t('Common.Properties')}</NavLink>
           </li>
           <li aria-hidden className="mx-1 h-4 w-px shrink-0 bg-white/25" />
           <li>

@@ -36,12 +36,19 @@ const SIZES = {
  * "waiting" is always a filled chip with ink on top, and a star is always a
  * glyph on the page's own ground.
  */
+// `shrink-0` is not decoration. MUI draws a partial star by wrapping a whole
+// one in a box clipped to `width: 70%; overflow: hidden`, and its `.MuiRating-
+// icon` wrapper is `display: flex` — so an icon that can shrink is squeezed
+// into 70% of its width instead of being cut off at 70%, and a 4.7 ends on a
+// narrow, misshapen star rather than a star seven-tenths full. MUI's own
+// icons never hit this because SvgIcon carries `flexShrink: 0`; Heroicons do
+// not, so it is set here.
 const iconFor = (size, className) => (
-  <StarIcon className={clsx(SIZES[size] ?? SIZES.md, 'text-info', className)} />
+  <StarIcon className={clsx(SIZES[size] ?? SIZES.md, 'shrink-0 text-info', className)} />
 )
 
 const emptyFor = (size) => (
-  <StarOutline className={clsx(SIZES[size] ?? SIZES.md, 'text-line-strong')} />
+  <StarOutline className={clsx(SIZES[size] ?? SIZES.md, 'shrink-0 text-line-strong')} />
 )
 
 // MUI sizes its own icons by font-size and lays them out with its own spacing.

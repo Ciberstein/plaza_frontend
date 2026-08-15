@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
+import { UsersIcon } from '@heroicons/react/20/solid'
 import { Button, ShopLogo } from '../../ui'
+import ShopMembers from '../../shared/ShopMembers'
 import { useMeta } from '../../../context/meta'
 import { notify } from '../../../utils/notify'
 import shops from '../../../services/shops.services'
@@ -87,6 +89,10 @@ const Dashboard = () => {
   }
 
   const labelFor = (source, value) => source.find(item => item.value === value)?.label
+
+  // Which roster is open, one at a time — a screen of five shops each with
+  // their own expanded team is a screen nobody can read.
+  const [team, setTeam] = useState(null)
 
   // Going live is absent on purpose: it is not one of the seller's transitions.
   const actions = (shop) => {
@@ -195,8 +201,29 @@ const Dashboard = () => {
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 gap-2">{actions(shop)}</div>
+                    <div className="flex shrink-0 gap-2">
+                      {/* A collaborator sees this too, on a shop that is not
+                          theirs to close or reopen — the roster is read-only
+                          for them, and that is enforced by the panel itself,
+                          not by hiding the button. */}
+                      {shop.status !== 'draft' && (
+                        <Button.Action
+                          variant="outline" color="neutral" size="sm"
+                          onClick={() => setTeam(t => (t === shop.id ? null : shop.id))}
+                        >
+                          <UsersIcon className="size-4" />
+                          {t('Members.Title')}
+                        </Button.Action>
+                      )}
+                      {shop.mine !== false && actions(shop)}
+                    </div>
                   </div>
+
+                  {team === shop.id && (
+                    <div className="mt-4 border-t border-line pt-4">
+                      <ShopMembers shop={shop} />
+                    </div>
+                  )}
 
                   {/* The reviewer's reason, in full. A refusal without it leaves the
                       seller guessing and guarantees an identical resubmission. */}

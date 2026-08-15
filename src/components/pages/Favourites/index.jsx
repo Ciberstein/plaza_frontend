@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import ProductCard from '../../shared/ProductCard'
+import ListingCard from '../../shared/ListingCard'
 import { Button } from '../../ui'
 import { useFavourites } from '../../../context/favourites'
 import favourites from '../../../services/favourites.services'
@@ -67,7 +67,7 @@ const Favourites = () => {
       ) : (
         <div className={`${GRID} mt-8`}>
           {rows.map((row, i) => (
-            <ProductCard
+            <ListingCard
               key={row.id}
               index={i}
               // The favourites endpoint answers with the listing and its cover

@@ -79,6 +79,10 @@ check('Score se etiqueta una sola vez y en espanol',
 // The clipped overlay MUI uses for a partially filled star. Its presence is
 // the whole reason showing a fractional average is worth anything.
 check('Score rellena la estrella parcial', has(score, 'MuiRating-decimal'))
+// The clip only cuts an icon that refuses to shrink. Without this the star at
+// the end of a 4.7 is squeezed narrow instead of filled seven-tenths, which is
+// how it shipped once.
+check('Score no deja que el icono recortado se encoja', has(score, 'shrink-0'))
 check('Score imprime el promedio', has(score, '4.3'))
 check('Score cuenta en espanol', has(score, '12 calificaciones'))
 check('Score usa los iconos de Plaza', has(score, 'text-info', 'text-line-strong'))

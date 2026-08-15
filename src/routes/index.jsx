@@ -12,8 +12,11 @@ import ListingEditor from '../components/pages/Listings/Editor'
 import Sell from '../components/pages/Sell'
 import ShopRequest from '../components/pages/Sell/ShopRequest'
 import Product from '../components/pages/Product'
+import Properties from '../components/pages/Properties'
 import Purchases from '../components/pages/Purchases'
 import Questions from '../components/pages/Questions'
+import Visits from '../components/pages/Visits'
+import Invitations from '../components/pages/Invitations'
 import Sales from '../components/pages/Sales'
 import Shop from '../components/pages/Shop'
 import Shops from '../components/pages/Shops'
@@ -26,7 +29,12 @@ const router = createBrowserRouter([
       // The other aisle. A category slug is unique across both trees, so
       // /c/:category serves either and works out which from the category
       // itself rather than needing a second filtered route.
-      { path: '/servicios', element: <Home kind="service" /> },
+      { path: '/services', element: <Home kind="service" /> },
+      // The third aisle, and a page of its own rather than the home grid
+      // with another kind: the filters are the feature. Somebody buying a
+      // shirt browses; somebody looking for somewhere to live is narrowing
+      // eleven axes at once and arrives knowing most of the answers.
+      { path: '/properties', element: <Properties /> },
       { path: '/c/:category', element: <Home /> },
       { path: '/p/:id', element: <Product /> },
       // The directory the home page used to be. Reached on purpose now.
@@ -47,6 +55,10 @@ const router = createBrowserRouter([
       // What buyers asked about this seller's listings. Reading a question is
       // public; this is the side of it that is only theirs to answer.
       { path: '/questions', element: <Protected><Questions /></Protected> },
+      // What a property has instead of an order: both sides of asking to
+      // see one, in one place.
+      { path: '/visits', element: <Protected><Visits /></Protected> },
+      { path: '/invitations', element: <Protected><Invitations /></Protected> },
       { path: '/dashboard', element: <Protected><Dashboard /></Protected> },
       { path: '/listings', element: <Protected><Listings /></Protected> },
       // One component for both: creating saves first and lands on the edit

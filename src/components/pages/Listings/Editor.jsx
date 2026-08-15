@@ -22,16 +22,22 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeftIcon, ArrowUpTrayIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { Accordion, Button, Checkbox, Combobox, Confirm, Input, Select, Textarea } from '../../ui'
 import { errorClass, labelClass } from '../../ui/styles'
+import { useAuth } from '../../../context/auth'
 import { useLanguage } from '../../../context/language'
 import { useMeta } from '../../../context/meta'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
 import {
   rateUnitShort,
+  withAddressVisibilityLabels,
   withCategoryLabels,
   withConditionLabels,
+  withFeatureLabels,
   withHandoverLabels,
+  withOperationLabels,
+  withPropertyConditionLabels,
   withRateUnitLabels,
+  propertySummary,
 } from '../../../utils/vocabulary'
 import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
@@ -46,6 +52,31 @@ const SHOP_DEFAULT = {
   seller: ['shipping'],
   plaza: ['shipping'],
   pickup: ['door_pickup'],
+}
+
+// Every field that belongs to a property and to nothing else. Named once
+// because three things read the list — the defaults, what is loaded back when
+// editing, and what is stripped from the payload of a listing that is not one
+// — and three copies of it drift apart the first time a field is added.
+const PROPERTY_FIELDS = [
+  'operation', 'builtArea', 'privateArea', 'lotArea',
+  'bedrooms', 'bathrooms', 'halfBaths', 'parking',
+  'stratum', 'floor', 'builtYear', 'adminFee', 'adminIncluded',
+  'features', 'neighborhood', 'address', 'addressVisibility', 'phonePublic',
+]
+
+// What each of them is when there is nothing stored. Empty strings rather than
+// nulls for everything that renders as a text input: a controlled input handed
+// null becomes an uncontrolled one, and React complains about the switch for
+// the rest of the session.
+const DEFAULT_PROPERTY = {
+  operation: null,
+  builtArea: '', privateArea: '', lotArea: '',
+  bedrooms: 0, bathrooms: 0, halfBaths: 0, parking: 0,
+  stratum: null, floor: '', builtYear: '',
+  adminFee: '', adminIncluded: false,
+  features: [], neighborhood: '', address: '',
+  addressVisibility: 'exact', phonePublic: false,
 }
 
 /**
@@ -168,7 +199,9 @@ const Photos = ({ tiles, onQueue, onReorder, busy, kind }) => {
       <p className="text-sm leading-relaxed text-muted">
         {kind === 'service'
           ? t('Editor.Photos.DragHintService', { max: MAX_PHOTOS })
-          : t('Editor.Photos.DragHint', { max: MAX_PHOTOS })}
+          : kind === 'property'
+            ? t('Editor.Photos.DragHintProperty', { max: MAX_PHOTOS })
+            : t('Editor.Photos.DragHint', { max: MAX_PHOTOS })}
       </p>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dropped}>
@@ -326,13 +359,14 @@ const Kind = ({ value, onChange }) => {
   const options = [
     { value: 'good', label: t('Editor.Kind.Good.Label'), subtitle: t('Editor.Kind.Good.Subtitle') },
     { value: 'service', label: t('Editor.Kind.Service.Label'), subtitle: t('Editor.Kind.Service.Subtitle') },
+    { value: 'property', label: t('Editor.Kind.Property.Label'), subtitle: t('Editor.Kind.Property.Hint') },
   ]
 
   return (
     <fieldset className="flex flex-col gap-1.5">
       <legend className={labelClass}>{t('Editor.Kind.Legend')}</legend>
 
-      <div className="mt-1.5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-1.5 grid gap-3 sm:grid-cols-3">
         {options.map(option => {
           const picked = value === option.value
 
@@ -363,16 +397,44 @@ const Kind = ({ value, onChange }) => {
   )
 }
 
+/**
+ * What the rooms-and-areas section says while it is folded shut.
+ *
+ * The four numbers somebody scanning their own listing checks: the same ones
+ * the card shows a shopper. Watched here rather than passed down, so the header
+ * repaints on its own without re-rendering the whole form on every keystroke.
+ */
+const PropertySummaryLine = ({ control }) => {
+  const { t } = useTranslation()
+  const [bedrooms, bathrooms, parking, builtArea] = useWatch({
+    control, name: ['bedrooms', 'bathrooms', 'parking', 'builtArea'],
+  })
+
+  return propertySummary(t, {
+    bedrooms: Number(bedrooms), bathrooms: Number(bathrooms),
+    parking: Number(parking), builtArea,
+  }) || null
+}
+
 const Editor = () => {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { language } = useLanguage()
+  const { account } = useAuth()
   const {
     categories: rawCategories, cities, conditions: rawConditions,
     delivery: rawDelivery, serviceDelivery: rawServiceDelivery,
     rateUnits: rawRateUnits, ready,
+    operations: rawOperations, propertyConditions: rawPropertyConditions,
+    features: rawFeatures, addressVisibility: rawAddressVisibility,
+    strata: rawStrata,
   } = useMeta()
+
+  // Whether there is a number to publish at all. `phone` is nullable on an
+  // account and plenty of people never filled it in, so the tick that offers
+  // to show it has to know before it offers.
+  const hasPhone = Boolean(account?.phone)
 
   const [product, setProduct] = useState(null)
   // null, not []: "this person has no shops" and "we have not asked yet" are
@@ -388,6 +450,7 @@ const Editor = () => {
   const [arrangement, setArrangement] = useState([])
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [archiving, setArchiving] = useState(false)
 
   // The form waits for both. Drawing it before the shops are known would let
   // the picker appear a moment later and shove everything below it down.
@@ -405,6 +468,17 @@ const Editor = () => {
       // Only a service uses these. `onRequest` never reaches the API — it is
       // the tick that means "send no price at all".
       rateUnit: null, onRequest: false,
+      // And only a property uses these. Flat rather than nested under a
+      // `property` key, because react-hook-form registers by path and a
+      // nested one would make every field name in this form twice as long to
+      // spare one line of assembly in `save`.
+      operation: null, propertyCondition: null,
+      builtArea: '', privateArea: '', lotArea: '',
+      bedrooms: 0, bathrooms: 0, halfBaths: 0, parking: 0,
+      stratum: null, floor: '', builtYear: '',
+      adminFee: '', adminIncluded: false,
+      features: [], neighborhood: '', address: '',
+      addressVisibility: 'exact', phonePublic: false,
     },
   })
 
@@ -413,6 +487,7 @@ const Editor = () => {
   const kind = useWatch({ control, name: 'kind' })
   const onRequest = useWatch({ control, name: 'onRequest' })
   const isService = kind === 'service'
+  const isProperty = kind === 'property'
 
   const categories = useMemo(
     () => withCategoryLabels(language, rawCategories, kind),
@@ -424,11 +499,33 @@ const Editor = () => {
     [t, kind, isService, rawServiceDelivery, rawDelivery],
   )
   const rateUnits = useMemo(() => withRateUnitLabels(t, rawRateUnits), [t, rawRateUnits])
+  const operations = useMemo(() => withOperationLabels(t, rawOperations), [t, rawOperations])
+  const propertyConditions = useMemo(
+    () => withPropertyConditionLabels(t, rawPropertyConditions),
+    [t, rawPropertyConditions],
+  )
+  const featureOptions = useMemo(() => withFeatureLabels(t, rawFeatures), [t, rawFeatures])
+  const addressVisibility = useMemo(
+    () => withAddressVisibilityLabels(t, rawAddressVisibility),
+    [t, rawAddressVisibility],
+  )
+  // Plain numbers with a word in front, so a column of digits in a picker says
+  // what it is counting.
+  const strata = useMemo(
+    () => rawStrata.map(({ value }) => ({
+      value, label: t('Vocabulary.Stratum.Value', { stratum: value }),
+    })),
+    [t, rawStrata],
+  )
 
   // The one value the form body itself needs: it decides whether availability
   // can be chosen at all. Everything else the headers report is read by the
   // summary components, which repaint on their own.
   const stock = useWatch({ control, name: 'stock' })
+  // Which of the two prices is being asked for, and whether "included in the
+  // rent" is a question that means anything.
+  const operation = useWatch({ control, name: 'operation' })
+  const renting = operation === 'rent'
 
   useEffect(() => {
     let ignore = false
@@ -466,6 +563,14 @@ const Editor = () => {
           // A stored null price is the seller having said "on request", which
           // is a different thing from an empty field they have not filled in.
           onRequest: data.kind === 'service' && data.price === null,
+          // The other half of the row, flattened back out. Nulls become empty
+          // strings for the number inputs: a controlled input handed null
+          // switches to uncontrolled and React complains about it forever
+          // after.
+          ...Object.fromEntries(
+            PROPERTY_FIELDS.map(field => [field, data.property?.[field] ?? DEFAULT_PROPERTY[field]]),
+          ),
+          propertyCondition: data.property?.condition ?? null,
         })
       })
       .catch(() => { if (!ignore) navigate('/listings', { replace: true }) })
@@ -511,7 +616,14 @@ const Editor = () => {
       ...(mine ?? []).map(shop => ({
         value: shop.id,
         label: shop.name,
-        subtitle: shop.status === 'active' ? t('Dashboard.Status.Active.Label') : t('Editor.SoldAs.CannotPublishYet', { status: shop.status }),
+        // Owned and joined shops come back in one list — `mine` says which —
+        // and a collaborator publishing under somebody else's brand should see
+        // that at a glance, in the same picker rather than a second one.
+        subtitle: shop.status !== 'active'
+          ? t('Editor.SoldAs.CannotPublishYet', { status: shop.status })
+          : shop.mine === false
+            ? t('Shops.Mine.Collaborator')
+            : t('Dashboard.Status.Active.Label'),
       })),
     ],
     [mine, t],
@@ -542,9 +654,13 @@ const Editor = () => {
   // Which section is holding something the form refused. Folding an answer out
   // of sight is only acceptable if the header says where the problem is.
   const problems = {
-    item: Boolean(errors.title || errors.categoryId || errors.condition),
+    item: Boolean(
+      errors.title || errors.categoryId || errors.condition ||
+      errors.operation || errors.propertyCondition,
+    ),
     price: Boolean(errors.price || errors.stock || errors.rateUnit),
-    delivery: Boolean(errors.cityId || errors.delivery),
+    delivery: Boolean(errors.cityId || errors.delivery || errors.address),
+    property: Boolean(errors.builtArea || errors.privateArea),
   }
 
   // Stock is the only thing that takes the choice away. A draft can still be
@@ -574,7 +690,22 @@ const Editor = () => {
       shopId: values.shopId === '' ? null : values.shopId,
     }
 
-    if (values.kind === 'service') {
+    if (values.kind === 'property') {
+      // A property has no shelf and no second-hand hour. The API refuses both
+      // rather than ignoring them, which is what keeps the two sides honest
+      // about what a property is.
+      delete payload.stock
+      delete payload.condition
+      delete payload.rateUnit
+      delete payload.delivery
+
+      // The form calls it `propertyCondition` so it cannot collide with the
+      // goods field of the same name in the same `values` object; the API
+      // calls it `condition`, because on its own table there is nothing to
+      // collide with.
+      payload.condition = values.propertyCondition
+      delete payload.propertyCondition
+    } else if (values.kind === 'service') {
       // Neither belongs to somebody's time, and sending them is what the API
       // refuses rather than quietly ignores.
       delete payload.stock
@@ -586,6 +717,13 @@ const Editor = () => {
       }
     } else {
       delete payload.rateUnit
+    }
+
+    // The property fields go nowhere else, so anything else carrying them is
+    // sending noise the API would have to know to ignore.
+    if (values.kind !== 'property') {
+      for (const field of PROPERTY_FIELDS) delete payload[field]
+      delete payload.propertyCondition
     }
 
     // The kind is set once, when the row is made. An edit that carried one
@@ -688,16 +826,24 @@ const Editor = () => {
     }
   }
 
+  // Answers whether it worked, so a dialog waiting on it knows whether to
+  // close.
   const act = async (action, message) => {
     setBusy(true)
     try {
       setProduct(await products[action](id))
       notify(message, 'success')
+      return true
     } catch {
       // The interceptor shows the list of what is still missing.
+      return false
     } finally {
       setBusy(false)
     }
+  }
+
+  const archive = async () => {
+    if (await act('archive', t('Editor.ArchivedNotify'))) setArchiving(false)
   }
 
   const remove = async () => {
@@ -779,7 +925,11 @@ const Editor = () => {
         <form onSubmit={handleSubmit(save)} className="flex flex-col gap-4">
           <Accordion
             key={`item-${problems.item}`}
-            title={isService ? t('Editor.Section.Service') : t('Editor.Section.Item')}
+            title={
+              isProperty
+                ? t('Editor.Section.Property')
+                : isService ? t('Editor.Section.Service') : t('Editor.Section.Item')
+            }
             summary={<ItemSummary control={control} categories={categoryOptions} conditions={conditions} kind={kind} />}
             problem={problems.item}
             defaultOpen
@@ -817,8 +967,16 @@ const Editor = () => {
 
             <Input
               label={t('Editor.Title.Label')}
-              placeholder={isService ? t('Editor.Title.PlaceholderService') : t('Editor.Title.Placeholder')}
-              hint={isService ? t('Editor.Title.HintService') : t('Editor.Title.Hint')}
+              placeholder={
+                isProperty
+                  ? t('Editor.Title.PlaceholderProperty')
+                  : isService ? t('Editor.Title.PlaceholderService') : t('Editor.Title.Placeholder')
+              }
+              hint={
+                isProperty
+                  ? t('Editor.Title.HintProperty')
+                  : isService ? t('Editor.Title.HintService') : t('Editor.Title.Hint')
+              }
               error={errors.title?.message}
               {...register('title', {
                 required: t('Editor.Title.Required'),
@@ -833,7 +991,7 @@ const Editor = () => {
                 <Combobox
                   label={t('Editor.Category.Label')} options={categoryOptions}
                   value={field.value} onChange={field.onChange}
-                  placeholder={ready ? t('ShopRequest.City.StartTyping') : t('Common.Loading')}
+                  placeholder={ready ? t('Editor.Category.StartTyping') : t('Common.Loading')}
                   disabled={!ready}
                   emptyMessage={t('Editor.Category.Empty')}
                   error={errors.categoryId?.message}
@@ -841,8 +999,44 @@ const Editor = () => {
               )}
             />
 
-            {/* There is no second-hand hour. */}
-            {!isService && (
+            {/* Sale or rent, and it comes before the price because it is
+                what decides what the price means. */}
+            {isProperty && (
+              <>
+                <Controller
+                  name="operation" control={control}
+                  rules={{ required: t('Editor.Operation.Required') }}
+                  render={({ field }) => (
+                    <Select
+                      label={t('Editor.Operation.Label')} options={operations}
+                      hint={t('Editor.Operation.Hint')}
+                      value={field.value} onChange={field.onChange}
+                      placeholder={ready ? t('Common.ChooseOne') : t('Common.Loading')}
+                      disabled={!ready}
+                      error={errors.operation?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="propertyCondition" control={control}
+                  rules={{ required: t('Editor.PropertyCondition.Required') }}
+                  render={({ field }) => (
+                    <Select
+                      label={t('Editor.PropertyCondition.Label')} options={propertyConditions}
+                      value={field.value} onChange={field.onChange}
+                      placeholder={ready ? t('Common.ChooseOne') : t('Common.Loading')}
+                      disabled={!ready}
+                      error={errors.propertyCondition?.message}
+                    />
+                  )}
+                />
+              </>
+            )}
+
+            {/* There is no second-hand hour, and a building answers this on
+                its own row with its own words. */}
+            {!isService && !isProperty && (
               <Controller
                 name="condition" control={control}
                 rules={{ required: isService ? false : t('Editor.Condition.Required') }}
@@ -877,7 +1071,11 @@ const Editor = () => {
 
             <Textarea
               label={t('Product.DescriptionTitle')} optional rows={4}
-              placeholder={isService ? t('Editor.Description.PlaceholderService') : t('Editor.Description.Placeholder')}
+              placeholder={
+                isProperty
+                  ? t('Editor.Description.PlaceholderProperty')
+                  : isService ? t('Editor.Description.PlaceholderService') : t('Editor.Description.Placeholder')
+              }
               error={errors.description?.message}
               {...register('description')}
             />
@@ -886,7 +1084,11 @@ const Editor = () => {
 
           <Accordion
             key={`price-${problems.price}`}
-            title={isService ? t('Editor.Section.RateAvailability') : t('Editor.Section.Price')}
+            title={
+              isProperty
+                ? (renting ? t('Editor.Price.Rent') : t('Editor.Price.Sale'))
+                : isService ? t('Editor.Section.RateAvailability') : t('Editor.Section.Price')
+            }
             summary={<PriceSummary control={control} published={published} kind={kind} />}
             problem={problems.price}
           >
@@ -911,9 +1113,18 @@ const Editor = () => {
 
             <div className="grid gap-6 sm:grid-cols-2">
               <Input
-                label={isService ? t('Editor.Rate.Label') : t('Editor.Price.Label')}
+                label={
+                  isProperty
+                    ? (renting ? t('Editor.Price.Rent') : t('Editor.Price.Sale'))
+                    : isService ? t('Editor.Rate.Label') : t('Editor.Price.Label')
+                }
+                hint={isProperty && renting ? t('Editor.Price.RentHint') : undefined}
                 prefix="$" inputMode="decimal"
-                placeholder={isService ? t('Editor.Rate.Placeholder') : '180000'}
+                placeholder={
+                  isProperty
+                    ? (renting ? '2500000' : '450000000')
+                    : isService ? t('Editor.Rate.Placeholder') : '180000'
+                }
                 disabled={isService && onRequest}
                 error={errors.price?.message}
                 {...register('price', {
@@ -984,7 +1195,11 @@ const Editor = () => {
 
           <Accordion
             key={`delivery-${problems.delivery}`}
-            title={isService ? t('Editor.Section.Where') : t('Editor.Section.Delivery')}
+            title={
+              isProperty
+                ? t('Editor.Section.Address')
+                : isService ? t('Editor.Section.Where') : t('Editor.Section.Delivery')
+            }
             summary={<DeliverySummary control={control} cities={cities} kind={kind} />}
             problem={problems.delivery}
           >
@@ -1004,22 +1219,202 @@ const Editor = () => {
               )}
             />
 
-            <Controller
-              name="delivery" control={control}
-              rules={{
-                validate: v =>
-                  v.length > 0 ||
-                  (isService ? t('Editor.Where.Required') : t('Editor.Delivery.Required')),
-              }}
-              render={({ field }) => (
-                <Delivery
-                  options={deliveryOptions} value={field.value} kind={kind}
-                  onChange={field.onChange} error={errors.delivery?.message}
+            {/* Nothing is handed over and nobody travels to deliver it, so
+                the question is not asked. What replaces it is where it is,
+                and how much of that a stranger gets to see. */}
+            {isProperty ? (
+              <>
+                <Input
+                  label={t('Editor.Neighborhood.Label')}
+                  placeholder={t('Editor.Neighborhood.Placeholder')}
+                  hint={t('Editor.Neighborhood.Hint')}
+                  optional
+                  {...register('neighborhood')}
                 />
-              )}
-            />
+
+                <Input
+                  label={t('Editor.Address.Label')}
+                  placeholder={t('Editor.Address.Placeholder')}
+                  hint={t('Editor.Address.Hint')}
+                  error={errors.address?.message}
+                  {...register('address', { required: t('Editor.Address.Required') })}
+                />
+
+                <Controller
+                  name="addressVisibility" control={control}
+                  render={({ field }) => (
+                    <Select
+                      label={t('Editor.Address.Visibility')} options={addressVisibility}
+                      hint={t('Editor.Address.VisibilityHint')}
+                      value={field.value} onChange={field.onChange}
+                      disabled={!ready}
+                    />
+                  )}
+                />
+
+                {/* Off unless the owner says otherwise, and disabled outright
+                    when there is no number to show — a tick that does nothing
+                    is worse than one that is not offered. */}
+                <Controller
+                  name="phonePublic" control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      label={t('Editor.Phone.Public')}
+                      hint={
+                        hasPhone
+                          ? `${t('Editor.Phone.PublicHint')} ${t('Editor.Phone.PublicWarning')}`
+                          : t('Editor.Phone.Missing')
+                      }
+                      checked={field.value && hasPhone}
+                      disabled={!hasPhone}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </>
+            ) : (
+              <Controller
+                name="delivery" control={control}
+                rules={{
+                  validate: v =>
+                    v.length > 0 ||
+                    (isService ? t('Editor.Where.Required') : t('Editor.Delivery.Required')),
+                }}
+                render={({ field }) => (
+                  <Delivery
+                    options={deliveryOptions} value={field.value} kind={kind}
+                    onChange={field.onChange} error={errors.delivery?.message}
+                  />
+                )}
+              />
+            )}
             </div>
           </Accordion>
+
+          {isProperty && (
+            <Accordion
+              key={`property-${problems.property}`}
+              title={t('Editor.Section.PropertyDetails')}
+              summary={<PropertySummaryLine control={control} />}
+              problem={problems.property}
+            >
+              <div className="flex flex-col gap-6">
+                <div className="grid gap-6 sm:grid-cols-3">
+                  <Input
+                    label={t('Editor.Area.Built')} inputMode="decimal"
+                    error={errors.builtArea?.message}
+                    {...register('builtArea', {
+                      required: t('Editor.Area.BuiltRequired'),
+                      min: { value: 1, message: t('Editor.Area.BuiltRequired') },
+                    })}
+                  />
+                  <Input
+                    label={t('Editor.Area.Private')} inputMode="decimal" optional
+                    hint={t('Editor.Area.PrivateHint')}
+                    error={errors.privateArea?.message}
+                    {...register('privateArea', {
+                      // The same rule the database holds, checked here so the
+                      // seller is told before the round trip rather than by it.
+                      validate: (value, form) =>
+                        !value || !form.builtArea || Number(value) <= Number(form.builtArea) ||
+                        t('Editor.Area.PrivateHint'),
+                    })}
+                  />
+                  <Input
+                    label={t('Editor.Area.Lot')} inputMode="decimal" optional
+                    hint={t('Editor.Area.LotHint')}
+                    {...register('lotArea')}
+                  />
+                </div>
+
+                {/* Zero is a real answer for all four — a studio has no
+                    separate bedroom, a lot has no bathroom — so they are
+                    numbers with a floor rather than required fields. */}
+                <div className="grid gap-6 sm:grid-cols-4">
+                  <Input label={t('Editor.Rooms.Bedrooms')} type="number" min="0" {...register('bedrooms')} />
+                  <Input label={t('Editor.Rooms.Bathrooms')} type="number" min="0" {...register('bathrooms')} />
+                  <Input label={t('Editor.Rooms.HalfBaths')} type="number" min="0" {...register('halfBaths')} />
+                  <Input label={t('Editor.Rooms.Parking')} type="number" min="0" {...register('parking')} />
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-3">
+                  <Controller
+                    name="stratum" control={control}
+                    render={({ field }) => (
+                      <Select
+                        label={t('Editor.Stratum.Label')} options={strata}
+                        hint={t('Editor.Stratum.Hint')}
+                        value={field.value} onChange={field.onChange}
+                        placeholder={t('Properties.Filters.Any')}
+                        optional
+                      />
+                    )}
+                  />
+                  <Input
+                    label={t('Editor.Floor.Label')} type="number" optional
+                    hint={t('Editor.Floor.Hint')}
+                    {...register('floor')}
+                  />
+                  <Input
+                    label={t('Editor.BuiltYear.Label')} type="number" optional
+                    placeholder="2018"
+                    {...register('builtYear')}
+                  />
+                </div>
+
+                {/* Only a tenant is ever asked whether it is included, and the
+                    database refuses the tick on a sale rather than storing a
+                    line nobody can act on. */}
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Input
+                    label={t('Editor.Admin.Fee')} prefix="$" inputMode="decimal" optional
+                    hint={t('Editor.Admin.FeeHint')}
+                    {...register('adminFee')}
+                  />
+                  {renting && (
+                    <Controller
+                      name="adminIncluded" control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          label={t('Editor.Admin.Included')}
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="sm:mt-7"
+                        />
+                      )}
+                    />
+                  )}
+                </div>
+
+                <Controller
+                  name="features" control={control}
+                  render={({ field }) => (
+                    <fieldset className="flex flex-col gap-1.5">
+                      <legend className={labelClass}>{t('Editor.Features.Label')}</legend>
+                      <p className="text-xs text-muted">{t('Editor.Features.Hint')}</p>
+
+                      <div className="mt-2 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {featureOptions.map(feature => (
+                          <Checkbox
+                            key={feature.value}
+                            label={feature.label}
+                            checked={field.value.includes(feature.value)}
+                            onChange={() =>
+                              field.onChange(
+                                field.value.includes(feature.value)
+                                  ? field.value.filter(f => f !== feature.value)
+                                  : [...field.value, feature.value],
+                              )
+                            }
+                          />
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
+                />
+              </div>
+            </Accordion>
+          )}
 
           <Accordion title={t('Editor.Section.Photos')} summary={photoSummary}>
             <Photos
@@ -1055,7 +1450,7 @@ const Editor = () => {
             {product && product.status !== 'archived' && (
               <Button.Action
                 type="button" variant="ghost" disabled={busy}
-                onClick={() => act('archive', t('Editor.ArchivedNotify'))}
+                onClick={() => setArchiving(true)}
               >
                 {t('Listings.Archive')}
               </Button.Action>
@@ -1072,6 +1467,20 @@ const Editor = () => {
             )}
           </div>
         </form>
+
+        {/* Neutral rather than red: archiving is a decision, not a loss, and
+            a red button here would teach the seller that the red one is the
+            harmless one. */}
+        <Confirm
+          open={archiving}
+          title={t('Listings.ArchiveConfirm.TitleNamed', { title: product?.title ?? t('Listings.DeleteConfirm.ThisListing') })}
+          body={t('Listings.ArchiveConfirm.Body')}
+          confirmLabel={t('Listings.ArchiveConfirm.Label')}
+          confirmColor="neutral"
+          loading={busy}
+          onConfirm={archive}
+          onCancel={() => setArchiving(false)}
+        />
 
         <Confirm
           open={confirming}

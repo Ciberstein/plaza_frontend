@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import ProductCard from '../../shared/ProductCard'
+import ListingCard from '../../shared/ListingCard'
 import { Button } from '../../ui'
 import { useLanguage } from '../../../context/language'
 import { useMeta } from '../../../context/meta'
@@ -54,6 +54,7 @@ const Home = ({ kind = 'good' }) => {
   const open = categories.find(c => c.slug === category)
   const aisle = open?.kind ?? kind
   const isService = aisle === 'service'
+  const isProperty = aisle === 'property'
 
   // The key carries all three, so switching aisle or category while a search is
   // open refetches rather than showing the last answer under the new heading.
@@ -80,7 +81,7 @@ const Home = ({ kind = 'good' }) => {
 
         {filtered && (
           <Link
-            to={isService ? '/servicios' : '/'}
+            to={isProperty ? '/properties' : isService ? '/services' : '/'}
             className="flex items-center gap-1.5 rounded-pz-sm border border-line-strong px-3 py-1.5 text-[13px] font-medium text-muted transition-colors hover:border-ink hover:text-ink"
           >
             <XMarkIcon className="size-4" />
@@ -116,7 +117,7 @@ const Home = ({ kind = 'good' }) => {
       ) : (
         <div className={GRID}>
           {list.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
+            <ListingCard key={product.id} product={product} index={i} />
           ))}
         </div>
       )}

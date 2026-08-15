@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { MapPinIcon, TruckIcon } from '@heroicons/react/20/solid'
 import { Button, ShopLogo } from '../../ui'
 import { useMeta } from '../../../context/meta'
-import ProductCard from '../../shared/ProductCard'
+import ListingCard from '../../shared/ListingCard'
 import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
 import { useResource } from '../../../hooks/useResource'
@@ -117,7 +117,7 @@ const Shop = () => {
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {stock.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
+              <ListingCard key={product.id} product={product} index={i} />
             ))}
           </div>
         )}

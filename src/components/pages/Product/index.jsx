@@ -7,6 +7,8 @@ import { Avatar, Button, Confirm, ShopLogo } from '../../ui'
 import { Score } from '../../ui/Stars'
 import Questions from '../../shared/Questions'
 import Reviews from '../../shared/Reviews'
+import PropertySpecs from '../../shared/PropertySpecs'
+import VisitRequest from '../../shared/VisitRequest'
 import { useAuth } from '../../../context/auth'
 import { useCart } from '../../../context/cart'
 import { useMeta } from '../../../context/meta'
@@ -192,16 +194,20 @@ const Buy = ({ product }) => {
   const mine = Boolean(account?.id) && account.id === product.seller?.id
   const paused = product.status === 'paused'
   const isService = product.kind === 'service'
-  // Somebody's time never runs out on a shelf. A service is available until
-  // its provider says otherwise, which is what pausing is for.
-  const gone = !isService && product.stock < 1
+  const isProperty = product.kind === 'property'
+  // Somebody's time never runs out on a shelf, and neither does a building. A
+  // service is available until its provider says otherwise and a property
+  // until its owner does, which is what pausing is for.
+  const gone = !isService && !isProperty && product.stock < 1
 
   if (!ready) return <div className="h-11" aria-hidden />
 
   if (mine) {
     return (
       <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
-        {isService ? t('Product.Service.YourListing') : t('Product.Buy.YourListing')}
+        {isProperty
+          ? t('Visit.Own')
+          : isService ? t('Product.Service.YourListing') : t('Product.Buy.YourListing')}
       </p>
     )
   }
@@ -238,10 +244,17 @@ const Buy = ({ product }) => {
         size="lg"
         full
       >
-        {isService ? t('Product.Service.SignInToRequest') : t('Product.Buy.SignInToBuy')}
+        {isProperty
+          ? t('Visit.SignIn')
+          : isService ? t('Product.Service.SignInToRequest') : t('Product.Buy.SignInToBuy')}
       </Button.Action>
     )
   }
+
+  // A property is never bought here. It is asked about, the owner answers, and
+  // that answer is what puts the two of them in touch — so this is the whole
+  // of the call to action, with no basket and no confirm-and-pay behind it.
+  if (isProperty) return <VisitRequest product={product} />
 
   const buyNow = async () => {
     setAsking(false)
@@ -333,6 +346,7 @@ const Product = () => {
 
   const city = cities.find(c => c.value === product.cityId)
   const isService = product.kind === 'service'
+  const isProperty = product.kind === 'property'
 
   const ways = withHandoverLabels(
     t,
@@ -348,7 +362,7 @@ const Product = () => {
 
         <div className="flex flex-col gap-6">
           <div>
-            {product.condition && !isService && (
+            {product.condition && !isService && !isProperty && (
               <span className="text-sm text-muted">{t(`Product.Condition.${CONDITION_KEY[product.condition]}`)}</span>
             )}
 
@@ -363,7 +377,7 @@ const Product = () => {
             </p>
 
             {/* Nothing is on a shelf, so nothing is said about one. */}
-            {!isService && (
+            {!isService && !isProperty && (
               <p className="mt-2 text-sm text-muted">
                 {product.stock > 0
                   ? t('Product.Stock.Available', { count: product.stock })
@@ -403,7 +417,10 @@ const Product = () => {
             </section>
           )}
 
-          {city && (
+          {/* A property says where it is in its own section, with as much of
+              the street as its owner chose to show. Repeating the city here
+              would print the same town twice, three lines apart. */}
+          {city && !isProperty && (
             <p className="flex items-center gap-1.5 text-sm text-muted">
               <MapPinIcon className="size-4 shrink-0 text-faint" />
               {city.label}
@@ -413,6 +430,15 @@ const Product = () => {
 
         </div>
       </div>
+
+      {/* The numbers before the prose. Somebody weighing three flats reads
+          the same eight rows in three tabs and only reads the description of
+          whichever one survives that. */}
+      {isProperty && (
+        <div className="mt-10 border-t border-line pt-8">
+          <PropertySpecs product={product} />
+        </div>
+      )}
 
       {product.description && (
         <section className="mt-10 border-t border-line pt-8">
@@ -425,8 +451,13 @@ const Product = () => {
 
       {/* Evidence first, then questions: a review is what somebody who
           already bought it will tell you, and a question is what you ask when
-          neither the description nor the reviews answered it. */}
-      <Reviews product={product} />
+          neither the description nor the reviews answered it.
+
+          A property has neither and never will: a review requires a delivered
+          suborder, and nothing about a flat is delivered through Plaza. The
+          section is left out rather than shown permanently empty, which would
+          read as nobody having liked it. */}
+      {!isProperty && <Reviews product={product} />}
 
       <Questions product={product} />
     </div>

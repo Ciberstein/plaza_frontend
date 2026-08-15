@@ -41,6 +41,30 @@ const SERVICE_DELIVERY_KEY = {
   remote: 'Remote',
 }
 
+// The property half of the same vocabulary. Same shape, same reason: the API
+// sends the raw value its columns validate against, and the words for it are
+// interface copy that has to exist in three languages.
+const OPERATION_KEY = {
+  sale: 'Sale',
+  rent: 'Rent',
+}
+
+// Not the same question a good's condition asks. `off_plan` is sobre planos —
+// sold before it is built — which has no equivalent among second-hand objects.
+const PROPERTY_CONDITION_KEY = {
+  new: 'New',
+  used: 'Used',
+  off_plan: 'OffPlan',
+}
+
+// How much of the address a stranger is shown. Three levels rather than a
+// switch, because the useful answer is usually the middle one.
+const ADDRESS_VISIBILITY_KEY = {
+  exact: 'Exact',
+  street: 'Street',
+  hidden: 'Hidden',
+}
+
 const withLabels = (t, options, namespace, keyOf) =>
   options.map(option => ({
     ...option,
@@ -64,6 +88,31 @@ export const withServiceDeliveryLabels = (t, options) =>
  */
 export const withHandoverLabels = (t, kind, options) =>
   kind === 'service' ? withServiceDeliveryLabels(t, options) : withDeliveryLabels(t, options)
+
+export const withOperationLabels = (t, options) => withLabels(t, options, 'Operation', OPERATION_KEY)
+export const withPropertyConditionLabels = (t, options) =>
+  withLabels(t, options, 'PropertyCondition', PROPERTY_CONDITION_KEY)
+export const withAddressVisibilityLabels = (t, options) =>
+  withLabels(t, options, 'AddressVisibility', ADDRESS_VISIBILITY_KEY)
+
+/**
+ * The amenities, translated.
+ *
+ * A flat list rather than the label/subtitle pair the others use: there are
+ * twenty-two of them and they go in a grid of checkboxes, where a second line
+ * under each would be a wall of text explaining what a lift is.
+ */
+export const withFeatureLabels = (t, options) =>
+  options.map(option => ({
+    ...option,
+    label: t(`Vocabulary.Feature.${option.value}`),
+  }))
+
+// The estrato, which is a number and stays a number. Labelled rather than left
+// bare so a picker does not show a column of digits with no idea what they
+// count.
+export const stratumLabel = (t, stratum) =>
+  stratum ? t('Vocabulary.Stratum.Value', { stratum }) : null
 
 // The short word after the slash: "$45.000 / hora". Its own key rather than
 // the option's label, because "Por hora" reads wrong in that position.
@@ -107,6 +156,14 @@ export const withCategoryLabels = (language, categories, kind = null) =>
  * or no amount at all, which is a real answer and not a missing one.
  */
 export const formatRate = (t, listing) => {
+  // A rent is a price with a period attached, and the period is not optional:
+  // two and a half million reads as a bargain for a flat and as robbery for a
+  // month, and the only thing telling them apart is the word after it.
+  if (listing.kind === 'property') {
+    const amount = formatMoney(listing.price, listing.currency)
+    return listing.property?.operation === 'rent' ? `${amount} / ${t('Vocabulary.Operation.Rent.Short')}` : amount
+  }
+
   if (listing.kind !== 'service') return formatMoney(listing.price, listing.currency)
   if (listing.price === null || listing.price === undefined) return t('Common.OnRequest')
 
@@ -114,4 +171,25 @@ export const formatRate = (t, listing) => {
   const unit = rateUnitShort(t, listing.rateUnit)
 
   return unit ? `${amount} / ${unit}` : amount
+}
+
+/**
+ * The line under a property's price: what it is, in numbers.
+ *
+ * "3 hab · 2 baños · 62 m²" is the whole of what somebody scanning a grid
+ * reads, and it has to survive a listing that answers only some of it — a lot
+ * has no bedrooms and a studio has no separate one. Empty parts are dropped
+ * rather than printed as zero, because "0 hab" reads as a mistake.
+ */
+export const propertySummary = (t, property) => {
+  if (!property) return null
+
+  const parts = []
+
+  if (property.bedrooms > 0) parts.push(t('Vocabulary.Property.Bedrooms', { count: property.bedrooms }))
+  if (property.bathrooms > 0) parts.push(t('Vocabulary.Property.Bathrooms', { count: property.bathrooms }))
+  if (property.parking > 0) parts.push(t('Vocabulary.Property.Parking', { count: property.parking }))
+  if (property.builtArea) parts.push(t('Vocabulary.Property.Area', { area: Math.round(Number(property.builtArea)) }))
+
+  return parts.join(' · ')
 }

@@ -20,6 +20,17 @@ const EMPTY = {
   shipping: [],
   conditions: [],
   delivery: [],
+  rateUnits: [],
+  serviceDelivery: [],
+  // The property vocabulary. `regions` is the one that is not an enum: it is
+  // derived from the cities, because a department is a column on them rather
+  // than a table of its own.
+  operations: [],
+  propertyConditions: [],
+  features: [],
+  addressVisibility: [],
+  strata: [],
+  regions: [],
 }
 
 const MetaContext = createContext({ ...EMPTY, ready: false })

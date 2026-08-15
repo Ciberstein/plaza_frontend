@@ -56,21 +56,33 @@ const Listings = () => {
   // The listing waiting on an answer, not a boolean: the dialog needs its title
   // to say which one is about to go.
   const [deleting, setDeleting] = useState(null)
+  const [archiving, setArchiving] = useState(null)
 
   const rows = list ?? data ?? []
 
+  // Answers whether it worked, so a dialog waiting on it knows whether to
+  // close. Publishing has nothing waiting and ignores it.
   const run = async (product, action, message) => {
     setBusy(product.id)
     try {
       const updated = await products[action](product.id)
       setList(rows.map(row => (row.id === updated.id ? updated : row)))
       notify(message(updated), 'success')
+      return true
     } catch {
       // The interceptor has already said what went wrong, and for publish that
       // message is the list of things still missing.
+      return false
     } finally {
       setBusy(null)
     }
+  }
+
+  const archive = async () => {
+    const done = await run(archiving, 'archive', p => t('Listings.Archived', { title: p.title }))
+    // Left open on failure, same as deleting: the row must not sit there
+    // unchanged with the dialog gone and nothing to say why.
+    if (done) setArchiving(null)
   }
 
   const remove = async () => {
@@ -92,9 +104,13 @@ const Listings = () => {
     const working = busy === product.id
 
     if (['active', 'paused', 'out_of_stock'].includes(product.status)) {
+      // Asked about first. Archiving is undoable for the listing and not for
+      // everyone holding it: it empties their baskets on the way out, and that
+      // is not a thing to do to a stranger by mis-clicking the button beside
+      // Edit.
       return (
         <Button.Action variant="ghost" size="sm" loading={working}
-          onClick={() => run(product, 'archive', p => t('Listings.Archived', { title: p.title }))}>
+          onClick={() => setArchiving(product)}>
           {t('Listings.Archive')}
         </Button.Action>
       )
@@ -207,6 +223,21 @@ const Listings = () => {
           </ul>
         )}
       </div>
+
+      {/* Neutral rather than red. Archiving is a decision, not a loss, and a
+          red button here would teach the seller that the red one is the
+          harmless one — which is exactly the lesson that gets a listing
+          deleted. */}
+      <Confirm
+        open={Boolean(archiving)}
+        title={t('Listings.ArchiveConfirm.TitleNamed', { title: archiving?.title ?? t('Listings.DeleteConfirm.ThisListing') })}
+        body={t('Listings.ArchiveConfirm.Body')}
+        confirmLabel={t('Listings.ArchiveConfirm.Label')}
+        confirmColor="neutral"
+        loading={busy === archiving?.id}
+        onConfirm={archive}
+        onCancel={() => setArchiving(null)}
+      />
 
       <Confirm
         open={Boolean(deleting)}
