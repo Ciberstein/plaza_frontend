@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, ShopLogo, Textarea } from '../../ui'
 import Contact from '../../shared/Contact'
+import { useLanguage } from '../../../context/language'
+import { formatDate } from '../../../utils/date'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
 import orders from '../../../services/orders.services'
@@ -10,29 +13,35 @@ import { useResource } from '../../../hooks/useResource'
 
 // Said from the buyer's side. The same row reads differently to the seller,
 // which is why /sales has its own words for it rather than sharing these.
-const STATUS = {
-  pending: {
-    label: 'Waiting on the seller',
-    tone: 'bg-info-tint text-ink',
-    note: 'They have been asked to confirm. Nothing is owed until they do.',
-  },
-  confirmed: {
-    label: 'Confirmed',
-    tone: 'bg-good-tint text-good',
-    // The one place a buyer finds out they are committed. Said here rather
-    // than left to the missing button, which explains nothing.
-    note: 'Agree the handover with them. You pay when you get it. Only the seller can cancel from here.',
-  },
-  delivered: {
-    label: 'Delivered',
-    tone: 'bg-sunk text-muted',
-    note: null,
-  },
-  cancelled: {
-    label: 'Cancelled',
-    tone: 'bg-sunk text-muted',
-    note: null,
-  },
+// Built from `t` rather than held as a module-level constant, because the
+// active language is not known until render.
+const statusOf = (t, status) => {
+  const table = {
+    pending: {
+      label: t('Purchases.Status.Pending.Label'),
+      tone: 'bg-info-tint text-ink',
+      note: t('Purchases.Status.Pending.Note'),
+    },
+    confirmed: {
+      label: t('Purchases.Status.Confirmed.Label'),
+      tone: 'bg-good-tint text-good',
+      // The one place a buyer finds out they are committed. Said here rather
+      // than left to the missing button, which explains nothing.
+      note: t('Purchases.Status.Confirmed.Note'),
+    },
+    delivered: {
+      label: t('Purchases.Status.Delivered.Label'),
+      tone: 'bg-sunk text-muted',
+      note: null,
+    },
+    cancelled: {
+      label: t('Purchases.Status.Cancelled.Label'),
+      tone: 'bg-sunk text-muted',
+      note: null,
+    },
+  }
+
+  return table[status] ?? { label: status, tone: 'bg-sunk text-muted', note: null }
 }
 
 // Only while the seller has not answered. Once they accept, they have set
@@ -41,6 +50,8 @@ const STATUS = {
 const BUYER_MAY_CANCEL = ['pending']
 
 const Purchases = () => {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
   const load = useCallback(() => orders.mine(), [])
   const { data, loading } = useResource(load, 'mine')
 
@@ -60,7 +71,7 @@ const Purchases = () => {
         reason,
       )
       setList(rows.map(order => (order.id === updated.id ? updated : order)))
-      notify('That part of the order was cancelled.', 'success')
+      notify(t('Purchases.Cancelled'), 'success')
       setCancelling(null)
       setReason('')
     } catch {
@@ -82,32 +93,30 @@ const Purchases = () => {
   return (
     <div className="shell py-8 sm:py-10">
       <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-        Your purchases
+        {t('Purchases.Title')}
       </h1>
 
       {rows.length === 0 ? (
         <div className="panel mt-8 flex flex-col items-center gap-4 px-6 py-16 text-center">
-          <h2 className="font-display text-xl font-semibold text-ink">Nothing bought yet</h2>
+          <h2 className="font-display text-xl font-semibold text-ink">{t('Purchases.Empty.Title')}</h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            Orders you place show up here, one card per seller.
+            {t('Purchases.Empty.Body')}
           </p>
-          <Button.Action as={Link} to="/" size="sm" className="mt-1">Browse Plaza</Button.Action>
+          <Button.Action as={Link} to="/" size="sm" className="mt-1">{t('Common.BrowsePlaza')}</Button.Action>
         </div>
       ) : (
         <ul className="mt-8 flex flex-col gap-8">
           {rows.map(order => (
             <li key={order.id} id={`order-${order.id}`}>
               <p className="tabular text-sm text-faint">
-                Order #{order.id} · {new Date(order.createdAt).toLocaleDateString('es-CO')}
+                {t('Purchases.OrderNumber', { id: order.id })} · {formatDate(order.createdAt, language)}
               </p>
 
               {/* One card per seller. An order that reached four people is four
                   agreements, each with its own answer and its own way out. */}
               <ul className="mt-3 flex flex-col gap-3">
                 {order.suborders?.map(part => {
-                  const status = STATUS[part.status] ?? {
-                    label: part.status, tone: 'bg-sunk text-muted', note: null,
-                  }
+                  const status = statusOf(t, part.status)
 
                   return (
                     <li key={part.id} className="panel p-5">
@@ -137,7 +146,7 @@ const Purchases = () => {
                             variant="ghost" color="danger" size="sm"
                             onClick={() => setCancelling({ orderId: order.id, part })}
                           >
-                            Cancel
+                            {t('Purchases.CancelAction')}
                           </Button.Action>
                         )}
                       </div>
@@ -171,7 +180,9 @@ const Purchases = () => {
                           own does not tell you whether to wait or look elsewhere. */}
                       {part.status === 'cancelled' && (
                         <p className="mt-4 rounded-pz-sm border-l-[3px] border-line-strong bg-sunk px-4 py-3 text-sm leading-relaxed text-muted">
-                          Cancelled by {part.cancelledBy === 'buyer' ? 'you' : 'the seller'}.
+                          {t('Purchases.CancelledByText', {
+                            who: t(part.cancelledBy === 'buyer' ? 'Purchases.CancelledBy.You' : 'Purchases.CancelledBy.Seller'),
+                          })}
                           {part.cancelReason && <span className="text-ink"> {part.cancelReason}</span>}
                         </p>
                       )}
@@ -190,16 +201,16 @@ const Purchases = () => {
 
       <Confirm
         open={Boolean(cancelling)}
-        title="Cancel this part of the order?"
-        body="The seller is told, and whatever they were holding goes back on sale. The rest of the order is untouched."
-        confirmLabel="Cancel it"
+        title={t('Purchases.ConfirmCancel.Title')}
+        body={t('Purchases.ConfirmCancel.Body')}
+        confirmLabel={t('Purchases.ConfirmCancel.Label')}
         loading={busy}
         onConfirm={cancel}
         onCancel={() => { setCancelling(null); setReason('') }}
       >
         <Textarea
-          label="Why, if you want to say" optional rows={3}
-          placeholder="Found it closer to home."
+          label={t('Purchases.Reason.Label')} optional rows={3}
+          placeholder={t('Purchases.Reason.Placeholder')}
           value={reason}
           onChange={event => setReason(event.target.value)}
         />

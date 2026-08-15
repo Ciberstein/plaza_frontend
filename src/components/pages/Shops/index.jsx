@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import ShopCard from '../../shared/ShopCard'
@@ -32,6 +33,7 @@ const Skeleton = () => (
 )
 
 const Shops = () => {
+  const { t } = useTranslation()
   const [params] = useSearchParams()
   const q = params.get('q')?.trim() || undefined
   const { cities } = useMeta()
@@ -46,7 +48,7 @@ const Shops = () => {
     <div className="shell py-8 sm:py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h1 className="rule-accent font-display text-2xl leading-tight font-bold tracking-tight text-ink sm:text-3xl">
-          {q ? `Shops matching “${q}”` : 'Shops on Plaza'}
+          {q ? t('Shops.MatchingQuery', { query: q }) : t('Shops.OnPlaza')}
         </h1>
 
         {q && (
@@ -55,7 +57,7 @@ const Shops = () => {
             className="flex items-center gap-1.5 rounded-pz-sm border border-line-strong px-3 py-1.5 text-[13px] font-medium text-muted transition-colors hover:border-ink hover:text-ink"
           >
             <XMarkIcon className="size-4" />
-            Clear search
+            {t('Shops.ClearSearch')}
           </Link>
         )}
       </div>
@@ -65,14 +67,12 @@ const Shops = () => {
       ) : list.length === 0 ? (
         <div className="panel flex flex-col items-center gap-4 px-6 py-16 text-center">
           <h2 className="font-display text-xl font-semibold text-ink">
-            {q ? 'No shop under that name' : 'No shops yet'}
+            {q ? t('Shops.NoneUnderName') : t('Shops.NoneYet')}
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            {q
-              ? `Nothing matches “${q}”. A shorter word usually finds more.`
-              : 'A shop is optional on Plaza. Most people sell under their own name.'}
+            {q ? t('Common.NoMatch', { query: q }) : t('Shops.Optional')}
           </p>
-          <Button.Action as={Link} to="/sell" size="sm" className="mt-1">Sell on Plaza</Button.Action>
+          <Button.Action as={Link} to="/sell" size="sm" className="mt-1">{t('Common.SellOnPlaza')}</Button.Action>
         </div>
       ) : (
         <div className={GRID}>

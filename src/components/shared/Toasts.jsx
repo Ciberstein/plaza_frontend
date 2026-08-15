@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
 import { subscribe } from '../../utils/notify'
@@ -15,6 +16,7 @@ const TONES = {
 const LIFETIME = 6000
 
 const Toasts = () => {
+  const { t } = useTranslation()
   const [toasts, setToasts] = useState([])
 
   useEffect(() => subscribe(toast => {
@@ -48,7 +50,7 @@ const Toasts = () => {
           <button
             type="button"
             onClick={() => dismiss(toast.id)}
-            aria-label="Dismiss"
+            aria-label={t('Shared.Toasts.Dismiss')}
             className="shrink-0 opacity-70 hover:opacity-100"
           >
             <XMarkIcon className="size-4" />

@@ -8,15 +8,18 @@ import {
   MenuItem,
   MenuItems,
 } from '@headlessui/react'
-import { ChevronDownIcon, MagnifyingGlassIcon, ShoppingBagIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, GlobeAltIcon, MagnifyingGlassIcon, ShoppingBagIcon } from '@heroicons/react/24/outline'
 import { CheckIcon } from '@heroicons/react/20/solid'
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/auth'
 import { useCart } from '../../context/cart'
+import { useLanguage } from '../../context/language'
 import { useMeta } from '../../context/meta'
 import { option, panel } from '../ui/styles'
 import { Avatar } from '../ui'
+import { withCategoryLabels } from '../../utils/vocabulary'
 
 /**
  * The wordmark, sitting on the band rather than on the page.
@@ -25,17 +28,21 @@ import { Avatar } from '../ui'
  * colour the mark does not need a second colour of its own, and giving it one
  * would put two brand colours in the same 26 pixels.
  */
-const Wordmark = () => (
-  <Link to="/" className="group shrink-0" aria-label="Plaza, home">
-    <span className="block font-display text-[26px] leading-none font-extrabold tracking-[-0.03em] text-white">
-      Plaza
-    </span>
-    <span
-      aria-hidden
-      className="mt-1.5 block h-0.75 w-full rounded-full bg-white/70 transition-transform duration-200 ease-pz group-hover:scale-x-105"
-    />
-  </Link>
-)
+const Wordmark = () => {
+  const { t } = useTranslation()
+
+  return (
+    <Link to="/" className="group shrink-0" aria-label={t('Header.Wordmark.Home')}>
+      <span className="block font-display text-[26px] leading-none font-extrabold tracking-[-0.03em] text-white">
+        Plaza
+      </span>
+      <span
+        aria-hidden
+        className="mt-1.5 block h-0.75 w-full rounded-full bg-white/70 transition-transform duration-200 ease-pz group-hover:scale-x-105"
+      />
+    </Link>
+  )
+}
 
 /**
  * Search, with the category picker built into the same bar.
@@ -50,7 +57,10 @@ const Wordmark = () => (
  * are one question. Two adjacent controls would read as two.
  */
 const Search = () => {
-  const { categories } = useMeta()
+  const { t } = useTranslation()
+  const { language } = useLanguage()
+  const { categories: rawCategories } = useMeta()
+  const categories = withCategoryLabels(language, rawCategories)
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
@@ -70,7 +80,7 @@ const Search = () => {
     go(slug, new FormData(event.currentTarget).get('q').toString().trim())
   }
 
-  const label = categories.find(c => c.slug === slug)?.label ?? 'All'
+  const label = categories.find(c => c.slug === slug)?.label ?? t('Header.Search.All')
 
   return (
     <form
@@ -79,8 +89,8 @@ const Search = () => {
       className="flex h-10 w-full items-center rounded-full bg-surface p-1">
       <Listbox value={slug} onChange={next => go(next, q)}>
         <ListboxButton
-          aria-label={`Search in ${label}`}
-          className={clsx("flex cursor-pointer items-center gap-1 rounded-full px-4 text-sm h-full", 
+          aria-label={t('Header.Search.InCategory', { category: label })}
+          className={clsx("flex cursor-pointer items-center gap-1 rounded-full px-4 text-sm h-full",
             "transition-colors hover:bg-sunk hover:text-ink focus-visible:outline-accent"
           )}
         >
@@ -95,7 +105,7 @@ const Search = () => {
         >
           <ListboxOption value={null} className={option}>
             <span className="truncate group-data-selected:font-semibold group-data-selected:text-link">
-              All
+              {t('Header.Search.All')}
             </span>
             <CheckIcon className="size-4 shrink-0 text-link opacity-0 group-data-selected:opacity-100" />
           </ListboxOption>
@@ -110,19 +120,19 @@ const Search = () => {
           ))}
         </ListboxOptions>
       </Listbox>
-      <label htmlFor="plaza-search" className="sr-only">Search Plaza</label>
+      <label htmlFor="plaza-search" className="sr-only">{t('Header.Search.Label')}</label>
       <input
         id="plaza-search"
         name="q"
         type="text"
         defaultValue={q}
-        placeholder="Search shops, products and brands"
+        placeholder={t('Header.Search.Placeholder')}
         className="min-w-0 grow bg-transparent px-3.5 py-2.5 text-sm text-ink placeholder:text-faint focus:outline-none"
       />
       <button
         type="submit"
-        aria-label="Search"
-        className={clsx("rounded-full text-muted flex justify-center items-center h-full aspect-square", 
+        aria-label={t('Header.Search.Submit')}
+        className={clsx("rounded-full text-muted flex justify-center items-center h-full aspect-square",
           "transition-colors hover:bg-sunk hover:text-ink focus-visible:outline-accent")}
       >
         <MagnifyingGlassIcon className="size-5" />
@@ -139,6 +149,7 @@ const link = clsx(
 )
 
 const Account = () => {
+  const { t } = useTranslation()
   const { account, ready, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -149,9 +160,9 @@ const Account = () => {
 
   // Nothing is claimed about the visitor until the session check answers, so
   // the control does not flicker from "Sign in" to their name.
-  if (!ready) return <span className={clsx(link, 'opacity-0')} aria-hidden>Sign in</span>
+  if (!ready) return <span className={clsx(link, 'opacity-0')} aria-hidden>{t('Header.Account.SignIn')}</span>
 
-  if (!account) return <NavLink to="/access" className={link}>Sign in</NavLink>
+  if (!account) return <NavLink to="/access" className={link}>{t('Header.Account.SignIn')}</NavLink>
 
   return (
     <Menu>
@@ -167,37 +178,37 @@ const Account = () => {
       >
         <MenuItem>
           <Link to="/account" className={option}>
-            Your account
+            {t('Header.Account.YourAccount')}
             {/* The one place the person is told, wherever they are in the app,
                 that something is waiting on them. */}
             {!account.verified && (
               <span className="rounded-pz-sm bg-info px-1.5 py-0.5 text-[11px] font-semibold text-on-info">
-                Confirm email
+                {t('Header.Account.ConfirmEmail')}
               </span>
             )}
           </Link>
         </MenuItem>
         <MenuItem>
-          <Link to="/saved" className={option}>Saved</Link>
+          <Link to="/saved" className={option}>{t('Header.Account.Saved')}</Link>
         </MenuItem>
         <MenuItem>
-          <Link to="/purchases" className={option}>Your purchases</Link>
+          <Link to="/purchases" className={option}>{t('Header.Account.YourPurchases')}</Link>
         </MenuItem>
         <MenuItem>
-          <Link to="/sales" className={option}>Your sales</Link>
+          <Link to="/sales" className={option}>{t('Header.Account.YourSales')}</Link>
         </MenuItem>
         <MenuItem>
-          <Link to="/listings" className={option}>Your listings</Link>
+          <Link to="/listings" className={option}>{t('Header.Account.YourListings')}</Link>
         </MenuItem>
         <MenuItem>
-          <Link to="/dashboard" className={option}>Your shops</Link>
+          <Link to="/dashboard" className={option}>{t('Header.Account.YourShops')}</Link>
         </MenuItem>
         <MenuItem>
-          <Link to="/sell/shop" className={option}>Request a shop</Link>
+          <Link to="/sell/shop" className={option}>{t('Header.Account.RequestShop')}</Link>
         </MenuItem>
         <div className="my-1.5 h-px bg-line" />
         <MenuItem>
-          <Link to="#" onClick={out} className={option}>Sign out</Link>
+          <Link to="#" onClick={out} className={option}>{t('Header.Account.SignOut')}</Link>
         </MenuItem>
       </MenuItems>
     </Menu>
@@ -215,13 +226,14 @@ const secondary = ({ isActive }) =>
 
 /** A basket you cannot see is one you forget you filled. */
 const Cart = () => {
+  const { t } = useTranslation()
   const { count } = useCart()
 
   return (
     <NavLink
       to="/cart"
       className={clsx(link, 'relative size-10 items-center justify-center rounded-full!')}
-      aria-label={count ? `Cart, ${count} items` : 'Cart'}
+      aria-label={count ? t('Header.Cart.LabelWithCount', { count }) : t('Header.Cart.Label')}
     >
       <ShoppingBagIcon className="size-5" />
 
@@ -234,7 +246,49 @@ const Cart = () => {
   )
 }
 
+/**
+ * ES / EN / PT, plain text rather than flags.
+ *
+ * A flag names a country, not a language, and Spanish alone is spoken across
+ * a dozen of them — there is no single flag for it that does not quietly
+ * privilege one country over the rest of the audience.
+ */
+const LanguageSwitcher = () => {
+  const { t } = useTranslation()
+  const { language, languages, setLanguage } = useLanguage()
+  const current = languages.find(l => l.value === language)
+
+  return (
+    <Listbox value={language} onChange={setLanguage}>
+      <ListboxButton
+        aria-label={t('Header.Language.Label')}
+        className="flex cursor-pointer items-center gap-1 rounded-pz-sm px-2 py-1 text-[13px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-white"
+      >
+        <GlobeAltIcon className="size-4" />
+        {current?.value.toUpperCase()}
+      </ListboxButton>
+
+      <ListboxOptions
+        anchor="bottom end"
+        transition
+        className={clsx(panel, 'w-36 origin-top-right transition duration-100 ease-out data-closed:scale-98 data-closed:opacity-0')}
+      >
+        {languages.map(l => (
+          <ListboxOption key={l.value} value={l.value} className={option}>
+            <span className="truncate group-data-selected:font-semibold group-data-selected:text-link">
+              {l.label}
+            </span>
+            <CheckIcon className="size-4 shrink-0 text-link opacity-0 group-data-selected:opacity-100" />
+          </ListboxOption>
+        ))}
+      </ListboxOptions>
+    </Listbox>
+  )
+}
+
 const Header = () => {
+  const { t } = useTranslation()
+
   return (
     // Solid, and the brand colour, the way a marketplace header is: it is the
     // one element on every page, so it is the one element that has to be
@@ -256,13 +310,16 @@ const Header = () => {
       {/* The same green a shade deeper. The categories moved into the search
           bar, so this row is free for the handful of destinations that are not
           a category and not an account setting. */}
-      <nav aria-label="Sections" className="bg-accent-deep">
+      <nav aria-label={t('Header.Nav.Sections')} className="bg-accent-deep">
         <ul className="shell flex items-center gap-1 overflow-x-auto py-1.5 scrollbar-none [&::-webkit-scrollbar]:hidden">
           <li>
-            <NavLink to="/shops" className={secondary}>Shops</NavLink>
+            <NavLink to="/shops" className={secondary}>{t('Header.Nav.Shops')}</NavLink>
           </li>
           <li>
-            <NavLink to="/sell" className={secondary}>Sell on Plaza</NavLink>
+            <NavLink to="/sell" className={secondary}>{t('Common.SellOnPlaza')}</NavLink>
+          </li>
+          <li className="ml-auto">
+            <LanguageSwitcher />
           </li>
         </ul>
       </nav>

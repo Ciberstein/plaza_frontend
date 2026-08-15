@@ -1,11 +1,14 @@
 import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { XMarkIcon } from '@heroicons/react/20/solid'
 import ProductCard from '../../shared/ProductCard'
 import { Button } from '../../ui'
+import { useLanguage } from '../../../context/language'
 import { useMeta } from '../../../context/meta'
 import products from '../../../services/products.services'
 import { useResource } from '../../../hooks/useResource'
+import { withCategoryLabels } from '../../../utils/vocabulary'
 
 const GRID = 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
 
@@ -37,10 +40,13 @@ const Skeleton = () => (
  * goods themselves. The shops moved to /shops, where you go on purpose.
  */
 const Home = () => {
+  const { t } = useTranslation()
   const { category } = useParams()
   const [params] = useSearchParams()
   const q = params.get('q')?.trim() || undefined
-  const { categories } = useMeta()
+  const { language } = useLanguage()
+  const { categories: rawCategories } = useMeta()
+  const categories = withCategoryLabels(language, rawCategories)
 
   // The key carries both, so switching category while a search is open refetches
   // rather than showing the last answer under the new heading.
@@ -52,8 +58,8 @@ const Home = () => {
   const categoryLabel = categories.find(c => c.slug === category)?.label
 
   const heading = q
-    ? `Results for “${q}”`
-    : categoryLabel ?? category ?? 'Everything for sale'
+    ? t('Home.ResultsFor', { query: q })
+    : categoryLabel ?? category ?? t('Home.EverythingForSale')
 
   return (
     <div className="shell py-8 sm:py-10">
@@ -68,7 +74,7 @@ const Home = () => {
             className="flex items-center gap-1.5 rounded-pz-sm border border-line-strong px-3 py-1.5 text-[13px] font-medium text-muted transition-colors hover:border-ink hover:text-ink"
           >
             <XMarkIcon className="size-4" />
-            Clear filters
+            {t('Home.ClearFilters')}
           </Link>
         )}
       </div>
@@ -78,16 +84,16 @@ const Home = () => {
       ) : list.length === 0 ? (
         <div className="panel flex flex-col items-center gap-4 px-6 py-16 text-center">
           <h2 className="font-display text-xl font-semibold text-ink">
-            {q ? 'Nothing under that name yet' : 'This aisle is still empty'}
+            {q ? t('Home.NothingUnderName') : t('Home.EmptyAisle')}
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
             {q
-              ? `Nothing matches “${q}”. A shorter word usually finds more.`
+              ? t('Common.NoMatch', { query: q })
               : category
-                ? 'Nobody has listed anything here yet. The first one gets the whole aisle.'
-                : 'Nothing is for sale yet. Anyone with a confirmed email can list something.'}
+                ? t('Home.EmptyAisleWithCategory')
+                : t('Home.EmptyAisleGeneral')}
           </p>
-          <Button.Action as={Link} to="/sell" size="sm" className="mt-1">Sell on Plaza</Button.Action>
+          <Button.Action as={Link} to="/sell" size="sm" className="mt-1">{t('Common.SellOnPlaza')}</Button.Action>
         </div>
       ) : (
         <div className={GRID}>

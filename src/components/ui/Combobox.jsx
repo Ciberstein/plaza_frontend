@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Combobox as HCombobox,
   ComboboxButton,
@@ -24,8 +25,8 @@ const Combobox = ({
   options = [],
   value = null,
   onChange,
-  placeholder = 'Search',
-  emptyMessage = 'Nothing matches that search',
+  placeholder,
+  emptyMessage,
   optional,
   hint,
   error,
@@ -33,6 +34,7 @@ const Combobox = ({
   className,
   name,
 }) => {
+  const { t } = useTranslation()
   const auto = useId()
   const inputId = id ?? auto
   const [query, setQuery] = useState('')
@@ -70,7 +72,7 @@ const Combobox = ({
             aria-invalid={error ? true : undefined}
             className={control({ error: !!error, extra: 'pr-10' })}
             displayValue={() => selected?.label ?? ''}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t('Shared.Combobox.DefaultPlaceholder')}
             onChange={e => setQuery(e.target.value)}
           />
           <ComboboxButton
@@ -84,7 +86,7 @@ const Combobox = ({
         <ComboboxOptions anchor="bottom" transition className={clsx(panel, 'w-(--input-width) origin-top transition duration-100 ease-out data-closed:scale-98 data-closed:opacity-0')}>
           {filtered.length === 0 ? (
             // An empty result is a dead end unless it says what to do next.
-            <p className="px-3 py-2 text-sm text-muted">{emptyMessage}</p>
+            <p className="px-3 py-2 text-sm text-muted">{emptyMessage ?? t('Shared.Combobox.NoMatch')}</p>
           ) : (
             filtered.map(opt => (
               <ComboboxOption key={opt.value} value={opt.value} disabled={opt.disabled} className={option}>

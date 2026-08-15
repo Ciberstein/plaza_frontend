@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { Button, ShopLogo } from '../../ui'
@@ -13,40 +14,48 @@ import shops from '../../../services/shops.services'
 // Blue is the tone for anything waiting on someone else. It cannot be green,
 // which on this page always means "done" or "you can act on this", and it
 // cannot be red, which always means something failed.
-const STATUS = {
-  draft: {
-    label: 'Draft',
-    tone: 'bg-sunk text-muted',
-    note: 'Only you can see this. Send it for review when it is ready.',
-  },
-  pending: {
-    label: 'Waiting for review',
-    tone: 'bg-info text-on-info',
-    note: 'Someone from Plaza is checking it. You cannot edit it until they do.',
-  },
-  rejected: {
-    label: 'Changes needed',
-    tone: 'bg-alert-tint text-alert',
-    note: null,
-  },
-  active: {
-    label: 'Open',
-    tone: 'bg-good-tint text-good',
-    note: null,
-  },
-  suspended: {
-    label: 'Suspended',
-    tone: 'bg-alert-tint text-alert',
-    note: 'Plaza took this shop down. Reply to the email we sent to sort it out.',
-  },
-  closed: {
-    label: 'Closed',
-    tone: 'bg-sunk text-muted',
-    note: 'Not listed. You can open it again whenever you want.',
-  },
+//
+// Built from `t` rather than held as a module-level constant, because the
+// active language is not known until render.
+const statusOf = (t, status) => {
+  const table = {
+    draft: {
+      label: t('Dashboard.Status.Draft.Label'),
+      tone: 'bg-sunk text-muted',
+      note: t('Dashboard.Status.Draft.Note'),
+    },
+    pending: {
+      label: t('Dashboard.Status.Pending.Label'),
+      tone: 'bg-info text-on-info',
+      note: t('Dashboard.Status.Pending.Note'),
+    },
+    rejected: {
+      label: t('Dashboard.Status.Rejected.Label'),
+      tone: 'bg-alert-tint text-alert',
+      note: null,
+    },
+    active: {
+      label: t('Dashboard.Status.Active.Label'),
+      tone: 'bg-good-tint text-good',
+      note: null,
+    },
+    suspended: {
+      label: t('Dashboard.Status.Suspended.Label'),
+      tone: 'bg-alert-tint text-alert',
+      note: t('Dashboard.Status.Suspended.Note'),
+    },
+    closed: {
+      label: t('Dashboard.Status.Closed.Label'),
+      tone: 'bg-sunk text-muted',
+      note: t('Dashboard.Status.Closed.Note'),
+    },
+  }
+
+  return table[status] ?? { label: status, tone: 'bg-sunk text-muted', note: null }
 }
 
 const Dashboard = () => {
+  const { t } = useTranslation()
   const { cities } = useMeta()
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -88,34 +97,34 @@ const Dashboard = () => {
       case 'rejected':
         return (
           <Button.Action size="sm" loading={working}
-            onClick={() => run(shop, 'submit', s => `${s.name} was sent for review.`)}>
-            Send for review
+            onClick={() => run(shop, 'submit', s => t('Dashboard.SentForReview', { name: s.name }))}>
+            {t('Dashboard.SendForReview')}
           </Button.Action>
         )
       case 'pending':
         return (
           <Button.Action variant="outline" color="neutral" size="sm" loading={working}
-            onClick={() => run(shop, 'withdraw', s => `${s.name} was taken out of the queue.`)}>
-            Withdraw
+            onClick={() => run(shop, 'withdraw', s => t('Dashboard.Withdrawn', { name: s.name }))}>
+            {t('Dashboard.Withdraw')}
           </Button.Action>
         )
       case 'active':
         return (
           <>
             <Button.Action variant="outline" color="neutral" size="sm" as={Link} to={`/s/${shop.slug}`}>
-              View storefront
+              {t('Dashboard.ViewStorefront')}
             </Button.Action>
             <Button.Action variant="ghost" size="sm" loading={working}
-              onClick={() => run(shop, 'close', s => `${s.name} is closed.`)}>
-              Close
+              onClick={() => run(shop, 'close', s => t('Dashboard.Closed', { name: s.name }))}>
+              {t('Dashboard.Close')}
             </Button.Action>
           </>
         )
       case 'closed':
         return (
           <Button.Action size="sm" loading={working}
-            onClick={() => run(shop, 'reopen', s => `${s.name} is open again.`)}>
-            Open again
+            onClick={() => run(shop, 'reopen', s => t('Dashboard.Reopened', { name: s.name }))}>
+            {t('Dashboard.OpenAgain')}
           </Button.Action>
         )
       default:
@@ -129,14 +138,13 @@ const Dashboard = () => {
       <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
         <div className="max-w-prose">
           <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-            Your shops
+            {t('Dashboard.Title')}
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted">
-            You can sell under your own name without any of this. A shop is a brand,
-            and Plaza reviews it before it opens.
+            {t('Dashboard.Intro')}
           </p>
         </div>
-        <Button.Action as={Link} to="/sell/shop" size="sm">Request a shop</Button.Action>
+        <Button.Action as={Link} to="/sell/shop" size="sm">{t('Header.Account.RequestShop')}</Button.Action>
       </div>
 
       <div className="mt-8">
@@ -154,11 +162,11 @@ const Dashboard = () => {
           </div>
         ) : list.length === 0 ? (
           <div className="panel flex flex-col items-center gap-4 px-6 py-16 text-center">
-            <h2 className="font-display text-xl font-semibold text-ink">No shops yet</h2>
+            <h2 className="font-display text-xl font-semibold text-ink">{t('Dashboard.Empty.Title')}</h2>
             <p className="max-w-sm text-sm leading-relaxed text-muted">
-              A shop gives what you sell a name and a storefront of its own.
+              {t('Dashboard.Empty.Body')}
             </p>
-            <Button.Action as={Link} to="/sell/shop" size="sm" className="mt-1">Request a shop</Button.Action>
+            <Button.Action as={Link} to="/sell/shop" size="sm" className="mt-1">{t('Header.Account.RequestShop')}</Button.Action>
           </div>
         ) : (
           // One panel with rules between the rows, rather than a stack of
@@ -166,11 +174,7 @@ const Dashboard = () => {
           // things; a divided list reads as one list, which is what it is.
           <ul className="panel divide-y divide-line">
             {list.map(shop => {
-              const status = STATUS[shop.status] ?? {
-                label: shop.status,
-                tone: 'bg-sunk text-muted',
-                note: null,
-              }
+              const status = statusOf(t, shop.status)
 
               return (
                 <li key={shop.id} className="p-5">

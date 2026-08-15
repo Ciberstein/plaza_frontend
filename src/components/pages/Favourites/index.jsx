@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import ProductCard from '../../shared/ProductCard'
 import { Button } from '../../ui'
@@ -17,6 +18,7 @@ const GRID = 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-
  * only decides whether the page waits to be told.
  */
 const Favourites = () => {
+  const { t } = useTranslation()
   // Only for the loading gate. The list itself is not filtered against this
   // set: it used to be, so that un-hearting a card removed it at once, and the
   // price was that a failed ids request — which is swallowed on purpose,
@@ -51,16 +53,16 @@ const Favourites = () => {
   return (
     <div className="shell py-8 sm:py-10">
       <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-        Saved
+        {t('Favourites.Title')}
       </h1>
 
       {rows.length === 0 ? (
         <div className="panel mt-8 flex flex-col items-center gap-4 px-6 py-16 text-center">
-          <h2 className="font-display text-xl font-semibold text-ink">Nothing saved yet</h2>
+          <h2 className="font-display text-xl font-semibold text-ink">{t('Favourites.Empty.Title')}</h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            The heart on any listing keeps it here. Nobody is told you saved it.
+            {t('Favourites.Empty.Body')}
           </p>
-          <Button.Action as={Link} to="/" size="sm" className="mt-1">Browse Plaza</Button.Action>
+          <Button.Action as={Link} to="/" size="sm" className="mt-1">{t('Common.BrowsePlaza')}</Button.Action>
         </div>
       ) : (
         <div className={`${GRID} mt-8`}>

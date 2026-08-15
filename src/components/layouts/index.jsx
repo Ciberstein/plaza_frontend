@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
 import Header from './Header'
 
@@ -6,40 +7,44 @@ import Header from './Header'
  * a page run a section across the full window while everything inside it still
  * lines up with the header above.
  */
-export const Public = () => (
-  <div className="flex min-h-dvh flex-col">
-    <Header />
+export const Public = () => {
+  const { t } = useTranslation()
 
-    <main className="grow">
-      <Outlet />
-    </main>
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <Header />
 
-    <footer className="border-t border-line bg-surface">
-      <div className="shell flex flex-col gap-6 py-10 sm:flex-row sm:items-start sm:justify-between">
-        <div className="max-w-xs">
-          <span className="block font-display text-lg leading-none font-extrabold tracking-[-0.03em] text-ink">
-            Plaza
-          </span>
-          <p className="mt-3 text-sm leading-relaxed text-muted">
-            A market where people sell what they make, under their own name or a shop's.
-          </p>
+      <main className="grow">
+        <Outlet />
+      </main>
+
+      <footer className="border-t border-line bg-surface">
+        <div className="shell flex flex-col gap-6 py-10 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-xs">
+            <span className="block font-display text-lg leading-none font-extrabold tracking-[-0.03em] text-ink">
+              Plaza
+            </span>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
+              {t('Footer.Tagline')}
+            </p>
+          </div>
+
+          <nav aria-label={t('Footer.Nav.Label')} className="flex flex-col gap-2.5 text-sm">
+            <Link to="/sell" className="w-fit font-medium text-link hover:underline">
+              {t('Common.SellOnPlaza')}
+            </Link>
+            <Link to="/shops" className="w-fit text-muted transition-colors hover:text-ink">
+              {t('Footer.Nav.Shops')}
+            </Link>
+            <Link to="/account" className="w-fit text-muted transition-colors hover:text-ink">
+              {t('Footer.Nav.Account')}
+            </Link>
+            <Link to="/dashboard" className="w-fit text-muted transition-colors hover:text-ink">
+              {t('Footer.Nav.Shops.Own')}
+            </Link>
+          </nav>
         </div>
-
-        <nav aria-label="Footer" className="flex flex-col gap-2.5 text-sm">
-          <Link to="/sell" className="w-fit font-medium text-link hover:underline">
-            Sell on Plaza
-          </Link>
-          <Link to="/shops" className="w-fit text-muted transition-colors hover:text-ink">
-            Shops
-          </Link>
-          <Link to="/account" className="w-fit text-muted transition-colors hover:text-ink">
-            Your account
-          </Link>
-          <Link to="/dashboard" className="w-fit text-muted transition-colors hover:text-ink">
-            Your shops
-          </Link>
-        </nav>
-      </div>
-    </footer>
-  </div>
-)
+      </footer>
+    </div>
+  )
+}

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../../context/auth'
 import { useResource } from '../../../hooks/useResource'
 import accountService from '../../../services/account.services'
@@ -8,6 +9,7 @@ import Profile from './partials/Profile'
 import Verify from './partials/Verify'
 
 const Account = () => {
+  const { t } = useTranslation()
   const { account: session, setAccount } = useAuth()
 
   const load = useCallback(() => accountService.me(), [])
@@ -41,9 +43,9 @@ const Account = () => {
       <div className="mx-auto flex max-w-2xl flex-col gap-5">
         <div>
           <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-            Your account
+            {t('Header.Account.YourAccount')}
           </h1>
-          <p className="mt-4 text-sm text-muted">Signed in as {session?.email}</p>
+          <p className="mt-4 text-sm text-muted">{t('Account.SignedInAs', { email: session?.email })}</p>
         </div>
 
         <Verify me={me} onChange={apply} />

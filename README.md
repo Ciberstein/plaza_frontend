@@ -159,6 +159,53 @@ listing. Guard the existence first.
 
 ---
 
+## Language
+
+Spanish, English and Portuguese, with Spanish the default — the audience is
+Colombian, and the site should not open in a language someone has to switch
+away from. `i18next` and `react-i18next`, flat JSON, one file per language:
+
+```
+i18n/
+  index.js          resources, default language, localStorage key
+  lang/es.json       lang/en.json       lang/pt.json
+```
+
+Every key is a dotted, PascalCase path scoped to where it is read —
+`Header.Search.Placeholder`, `Editor.Availability.HintZero` — except for a
+`Common.*` handful reused verbatim across pages: `Common.SellOnPlaza`,
+`Common.BackToPlaza`. The three files are kept in lockstep on purpose; nothing
+ships a key one language has and another does not.
+
+`useLanguage()`, in `src/context/language.jsx`, is the switch: changing it
+updates `i18next`, `<html lang>` (which a screen reader and a search engine
+read, not only this app), and what is remembered for next time — one call,
+three things kept in step. `useTranslation()` from `react-i18next` is how a
+component reads a key.
+
+**Two things translated do not mean everything does.** Condition, delivery
+and shop-shipping are interface copy, not database content: `/public/meta`
+sends only the raw value for those three, and `src/utils/vocabulary.js` turns
+each one into a translated label and subtitle, the same way `CONDITION_KEY`
+already did for a listing's displayed condition. Category names *are*
+database content — seeded in Spanish, no admin flow yet to add one outside
+the seeder — but small and fixed enough that `src/utils/categoryLabels.js`
+is a plain lookup table, keyed by the same `slug` the API sends, rather than
+a schema change; `withCategoryLabels()` applies it wherever a category name
+is shown. City names are database content too, and are deliberately left as
+the API sends them: they are proper nouns — *Bogotá*, not "Bogotá" translated
+into anything — so following the active language would be wrong here rather
+than merely incomplete, the same way a place name does not get typeset
+differently in a book depending on what language you read it in. And
+`formatMoney` (`src/utils/money.js`) always renders in `es-CO`, deliberately:
+the currency is Colombian pesos regardless of who is reading, the same way a
+menu priced in euros keeps its comma decimal for a visitor who reads no
+French. `formatDate` (`src/utils/date.js`), by contrast, follows the active
+language — a date carries no regional identity of its own, and showing one in
+Spanish format to an English reader was a plain oversight, not a choice.
+
+---
+
 ## Known gaps
 
 - **No tests.** Verification is `npm run build`, `npm run lint`, and walking it.
@@ -166,6 +213,9 @@ listing. Guard the existence first.
   in here calls it, because the only shop form is the one that requests one.
 - **Nothing is paid through Plaza.** The cart and orders exist; there is no
   checkout, by design for now.
-- **The interface is in English** while `index.html` is `lang="es-CO"`, money
-  formats as `es-CO` and the audience is Colombian. A deliberate hold, not an
-  oversight.
+- **Server messages are not translated.** A failed request often surfaces the
+  backend's own error text, which is English regardless of the page's language.
+  Only the frontend's own fallback messages follow it.
+- **A category added outside `categories.data.seeders.js`'s current 99 rows
+  has no translation until `categoryLabels.js` is updated to match** — it
+  shows its Spanish name in every language until then. See "Language" above.

@@ -20,9 +20,11 @@
     "@tailwindcss/vite": "^4.1.14",
     "axios": "^1.12.2",
     "clsx": "^2.1.1",
+    "i18next": "^26.3.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.64.0",
+    "react-i18next": "^17.0.11",
     "react-router-dom": "^7.9.4",
     "tailwindcss": "^4.1.14"
   },

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   KeyboardSensor,
@@ -21,9 +22,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeftIcon, ArrowUpTrayIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { Accordion, Button, Checkbox, Combobox, Confirm, Input, Select, Textarea } from '../../ui'
 import { errorClass, labelClass } from '../../ui/styles'
+import { useLanguage } from '../../../context/language'
 import { useMeta } from '../../../context/meta'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
+import { withCategoryLabels, withConditionLabels, withDeliveryLabels } from '../../../utils/vocabulary'
 import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
 
@@ -51,6 +54,7 @@ const SHOP_DEFAULT = {
  */
 /** One photograph, draggable. */
 const Tile = ({ tile, cover, busy }) => {
+  const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: tile.key })
 
@@ -74,7 +78,7 @@ const Tile = ({ tile, cover, busy }) => {
         <Button.Icon
           variant="overlay" color="danger" size="sm" disabled={busy}
           onClick={tile.remove}
-          aria-label="Remove this photo"
+          aria-label={t('Editor.Photos.Remove')}
         >
           <TrashIcon className="size-4" />
         </Button.Icon>
@@ -84,11 +88,11 @@ const Tile = ({ tile, cover, busy }) => {
           stored and is not is the more urgent fact. */}
       {tile.pending ? (
         <span className="absolute inset-x-0 bottom-0 bg-info py-1 text-center text-[10px] font-bold tracking-wide text-on-info uppercase">
-          Not saved
+          {t('Editor.Photos.NotSaved')}
         </span>
       ) : cover ? (
         <span className="absolute inset-x-0 bottom-0 bg-ink/80 py-1 text-center text-[10px] font-bold tracking-wide text-ground uppercase">
-          Cover
+          {t('Editor.Photos.Cover')}
         </span>
       ) : null}
     </li>
@@ -107,6 +111,7 @@ const Tile = ({ tile, cover, busy }) => {
  * not have, and it would have replaced a button that worked for everyone.
  */
 const Photos = ({ tiles, onQueue, onReorder, busy }) => {
+  const { t } = useTranslation()
   const fileInput = useRef(null)
   const total = tiles.length
 
@@ -124,13 +129,13 @@ const Photos = ({ tiles, onQueue, onReorder, busy }) => {
     if (!files.length) return
 
     const room = MAX_PHOTOS - total
-    if (room <= 0) return notify(`A listing holds ${MAX_PHOTOS} photos.`, 'error')
+    if (room <= 0) return notify(t('Editor.Photos.MaxReached', { max: MAX_PHOTOS }), 'error')
 
     const tooBig = files.filter(file => file.size > MAX_MB * 1024 * 1024)
-    if (tooBig.length) notify(`Skipped ${tooBig.length} over ${MAX_MB} MB.`, 'error')
+    if (tooBig.length) notify(t('Editor.Photos.SkippedTooBig', { count: tooBig.length, max: MAX_MB }), 'error')
 
     const accepted = files.filter(file => file.size <= MAX_MB * 1024 * 1024).slice(0, room)
-    if (files.length > room) notify(`Only ${room} more will fit.`, 'error')
+    if (files.length > room) notify(t('Editor.Photos.OnlyWillFit', { count: room }), 'error')
 
     onQueue(accepted.map(file => ({
       key: `q-${crypto.randomUUID()}`,
@@ -152,9 +157,7 @@ const Photos = ({ tiles, onQueue, onReorder, busy }) => {
   return (
     <div>
       <p className="text-sm leading-relaxed text-muted">
-        Drag to arrange them. The first one is the cover, and it is the only one most
-        people will ever see. Up to {MAX_PHOTOS}, and at least one to publish.
-        They upload when you save.
+        {t('Editor.Photos.DragHint', { max: MAX_PHOTOS })}
       </p>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dropped}>
@@ -173,7 +176,7 @@ const Photos = ({ tiles, onQueue, onReorder, busy }) => {
                   className="flex size-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-pz border-2 border-dashed border-accent/45 text-link transition-colors hover:border-accent hover:bg-accent-tint disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <ArrowUpTrayIcon className="size-6" />
-                  <span className="text-xs font-medium">Select</span>
+                  <span className="text-xs font-medium">{t('Editor.Photos.Select')}</span>
                 </button>
               </li>
             )}
@@ -204,72 +207,84 @@ const Photos = ({ tiles, onQueue, onReorder, busy }) => {
 const labelOf = (list, value) => list.find(o => o.value === value)?.label
 
 const ItemSummary = ({ control, categories, conditions }) => {
+  const { t } = useTranslation()
   const [title, categoryId, condition] = useWatch({
     control, name: ['title', 'categoryId', 'condition'],
   })
 
   return [
-    title || 'Not named yet',
+    title || t('Editor.Summary.NotNamed'),
     labelOf(categories, categoryId),
     labelOf(conditions, condition),
   ].filter(Boolean).join(' · ')
 }
 
 const PriceSummary = ({ control, published }) => {
+  const { t } = useTranslation()
   const [price, stock, availability] = useWatch({
     control, name: ['price', 'stock', 'availability'],
   })
 
   return [
-    price ? formatMoney(price) : 'No price',
-    `${stock || 0} in stock`,
+    price ? formatMoney(price) : t('Editor.Summary.NoPrice'),
+    t('Listings.InStock', { count: Number(stock) || 0 }),
     published && (Number(stock) === 0
-      ? 'Unavailable'
-      : availability === 'paused' ? 'Paused' : 'Available'),
+      ? t('Editor.Summary.Unavailable')
+      : availability === 'paused' ? t('Listings.Status.Paused.Label') : t('Editor.Summary.Available')),
   ].filter(Boolean).join(' · ')
 }
 
 const DeliverySummary = ({ control, cities }) => {
+  const { t } = useTranslation()
   const [cityId, delivery] = useWatch({ control, name: ['cityId', 'delivery'] })
   const count = delivery?.length ?? 0
 
   return [
-    labelOf(cities, cityId) ?? 'No location',
-    count ? `${count} ${count === 1 ? 'way' : 'ways'} to hand it over` : 'No delivery chosen',
+    labelOf(cities, cityId) ?? t('Editor.Summary.NoLocation'),
+    count ? t('Editor.Summary.WaysToHandOver', { count }) : t('Editor.Summary.NoDeliveryChosen'),
   ].join(' · ')
 }
 
 /** The delivery checkboxes. Several at once, at least one. */
-const Delivery = ({ options, value, onChange, error }) => (
-  <fieldset className="flex flex-col gap-1.5">
-    <legend className={labelClass}>How you can hand it over</legend>
+const Delivery = ({ options, value, onChange, error }) => {
+  const { t } = useTranslation()
 
-    <div className="mt-1.5 flex flex-col gap-3">
-      {options.map(option => (
-        <Checkbox
-          key={option.value}
-          label={option.label}
-          hint={option.subtitle}
-          checked={value.includes(option.value)}
-          onChange={checked =>
-            onChange(
-              checked
-                ? [...value, option.value]
-                : value.filter(v => v !== option.value),
-            )
-          }
-        />
-      ))}
-    </div>
+  return (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className={labelClass}>{t('Editor.Delivery.Legend')}</legend>
 
-    {error && <p className={errorClass}>{error}</p>}
-  </fieldset>
-)
+      <div className="mt-1.5 flex flex-col gap-3">
+        {options.map(option => (
+          <Checkbox
+            key={option.value}
+            label={option.label}
+            hint={option.subtitle}
+            checked={value.includes(option.value)}
+            onChange={checked =>
+              onChange(
+                checked
+                  ? [...value, option.value]
+                  : value.filter(v => v !== option.value),
+              )
+            }
+          />
+        ))}
+      </div>
+
+      {error && <p className={errorClass}>{error}</p>}
+    </fieldset>
+  )
+}
 
 const Editor = () => {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
-  const { categories, cities, conditions, delivery: deliveryOptions, ready } = useMeta()
+  const { language } = useLanguage()
+  const { categories: rawCategories, cities, conditions: rawConditions, delivery: rawDelivery, ready } = useMeta()
+  const categories = useMemo(() => withCategoryLabels(language, rawCategories), [language, rawCategories])
+  const conditions = useMemo(() => withConditionLabels(t, rawConditions), [t, rawConditions])
+  const deliveryOptions = useMemo(() => withDeliveryLabels(t, rawDelivery), [t, rawDelivery])
 
   const [product, setProduct] = useState(null)
   // null, not []: "this person has no shops" and "we have not asked yet" are
@@ -378,14 +393,14 @@ const Editor = () => {
 
   const shopOptions = useMemo(
     () => [
-      { value: '', label: 'Under my own name', subtitle: 'Your username and photo' },
+      { value: '', label: t('Editor.SoldAs.UnderOwnName'), subtitle: t('Editor.SoldAs.YourUsername') },
       ...(mine ?? []).map(shop => ({
         value: shop.id,
         label: shop.name,
-        subtitle: shop.status === 'active' ? 'Open' : `${shop.status} - cannot publish yet`,
+        subtitle: shop.status === 'active' ? t('Dashboard.Status.Active.Label') : t('Editor.SoldAs.CannotPublishYet', { status: shop.status }),
       })),
     ],
-    [mine],
+    [mine, t],
   )
 
   // Picking a shop while creating suggests how that shop usually works. Only
@@ -402,9 +417,9 @@ const Editor = () => {
 
   const photoSummary = (() => {
     const total = (product?.images?.length ?? 0) + queued.length
-    if (!total) return 'No photos yet'
-    const pending = queued.length ? `, ${queued.length} not saved` : ''
-    return `${total} ${total === 1 ? 'photo' : 'photos'}${pending}`
+    if (!total) return t('Editor.Summary.NoPhotosYet')
+    const pending = queued.length ? t('Editor.Summary.NotSavedSuffix', { count: queued.length }) : ''
+    return `${t('Editor.Summary.PhotosCount', { count: total })}${pending}`
   })()
 
   // Which section is holding something the form refused. Folding an answer out
@@ -418,10 +433,10 @@ const Editor = () => {
   // Stock is the only thing that takes the choice away. A draft can still be
   // set to open or paused; the answer is carried into the moment it publishes.
   const availabilityHint = empty
-    ? 'At zero stock nothing is available, whatever is chosen here.'
+    ? t('Editor.Availability.HintZero')
     : published
       ? undefined
-      : 'Applied when you publish it.'
+      : t('Editor.Availability.HintDraft')
 
   /**
    * Saving, and optionally publishing what was just saved.
@@ -501,14 +516,14 @@ const Editor = () => {
       if (live) {
         notify(
           values.availability === 'paused'
-            ? 'Published, and paused as you asked.'
-            : 'Your listing is live.',
+            ? t('Editor.PublishedPausedNotify')
+            : t('Editor.LiveNotify'),
           'success',
         )
       }
       else if (!publish) {
         notify(
-          id ? 'Listing saved.' : 'Saved as a draft. Publish it when you are ready.',
+          id ? t('Editor.SavedNotify') : t('Editor.SavedAsDraftNotify'),
           'success',
         )
       }
@@ -550,7 +565,7 @@ const Editor = () => {
     setBusy(true)
     try {
       await products.remove(id)
-      notify('Listing deleted.', 'success')
+      notify(t('Editor.DeletedNotify'), 'success')
       navigate('/listings', { replace: true })
     } catch {
       // Reported by the interceptor, and the page stays where it is.
@@ -594,7 +609,7 @@ const Editor = () => {
       <div className="shell py-8 sm:py-12" aria-hidden>
         <div className="mx-auto max-w-2xl">
           <div className="h-8 w-56 animate-pulse rounded-full bg-sunk" />
-          <div className="panel mt-7 h-[32rem] animate-pulse" />
+          <div className="panel mt-7 h-128 animate-pulse" />
         </div>
       </div>
     )
@@ -609,11 +624,11 @@ const Editor = () => {
             className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-ink"
           >
             <ArrowLeftIcon className="size-4" />
-            Your listings
+            {t('Header.Account.YourListings')}
           </Link>
 
           <h1 className="rule-accent mt-5 font-display text-3xl font-bold tracking-tight text-ink">
-            {id ? 'Edit listing' : 'List an item'}
+            {id ? t('Editor.EditTitle') : t('Sell.Get.ListItem')}
           </h1>
         </div>
 
@@ -623,33 +638,33 @@ const Editor = () => {
         <form onSubmit={handleSubmit(save)} className="flex flex-col gap-4">
           <Accordion
             key={`item-${problems.item}`}
-            title="The item"
+            title={t('Editor.Section.Item')}
             summary={<ItemSummary control={control} categories={categoryOptions} conditions={conditions} />}
             problem={problems.item}
             defaultOpen
           >
             <div className="flex flex-col gap-6">
             <Input
-              label="Title"
-              placeholder="Handwoven wool blanket"
-              hint="What it is, in the words someone would search for."
+              label={t('Editor.Title.Label')}
+              placeholder={t('Editor.Title.Placeholder')}
+              hint={t('Editor.Title.Hint')}
               error={errors.title?.message}
               {...register('title', {
-                required: 'Give the listing a title.',
-                minLength: { value: 3, message: 'Use at least 3 characters.' },
+                required: t('Editor.Title.Required'),
+                minLength: { value: 3, message: t('ShopRequest.Name.MinLength') },
               })}
             />
 
             <Controller
               name="categoryId" control={control}
-              rules={{ required: 'Pick the aisle it belongs in.' }}
+              rules={{ required: t('Editor.Category.Required') }}
               render={({ field }) => (
                 <Combobox
-                  label="Category" options={categoryOptions}
+                  label={t('Editor.Category.Label')} options={categoryOptions}
                   value={field.value} onChange={field.onChange}
-                  placeholder={ready ? 'Start typing a category' : 'Loading…'}
+                  placeholder={ready ? t('ShopRequest.City.StartTyping') : t('Common.Loading')}
                   disabled={!ready}
-                  emptyMessage="No category by that name."
+                  emptyMessage={t('Editor.Category.Empty')}
                   error={errors.categoryId?.message}
                 />
               )}
@@ -657,14 +672,14 @@ const Editor = () => {
 
             <Controller
               name="condition" control={control}
-              rules={{ required: 'Say what condition it is in.' }}
+              rules={{ required: t('Editor.Condition.Required') }}
               render={({ field }) => (
                 <Select
-                  label="Condition" options={conditions}
+                  label={t('Editor.Condition.Label')} options={conditions}
                   value={field.value} onChange={field.onChange}
                   // Never preselected. A default here publishes everything
                   // second-hand as new by whoever did not scroll this far.
-                  placeholder={ready ? 'Choose one' : 'Loading…'}
+                  placeholder={ready ? t('Common.ChooseOne') : t('Common.Loading')}
                   disabled={!ready}
                   error={errors.condition?.message}
                 />
@@ -678,7 +693,7 @@ const Editor = () => {
                 name="shopId" control={control}
                 render={({ field }) => (
                   <Select
-                    label="Sold as" options={shopOptions} value={field.value}
+                    label={t('Editor.SoldAs.Label')} options={shopOptions} value={field.value}
                     onChange={next => { field.onChange(next); suggestDelivery(next) }}
                   />
                 )}
@@ -686,8 +701,8 @@ const Editor = () => {
             )}
 
             <Textarea
-              label="Description" optional rows={4}
-              placeholder="Wool from Nariño, woven on a pedal loom. 180 by 130 cm."
+              label={t('Product.DescriptionTitle')} optional rows={4}
+              placeholder={t('Editor.Description.Placeholder')}
               error={errors.description?.message}
               {...register('description')}
             />
@@ -696,28 +711,28 @@ const Editor = () => {
 
           <Accordion
             key={`price-${problems.price}`}
-            title="Price and availability"
+            title={t('Editor.Section.Price')}
             summary={<PriceSummary control={control} published={published} />}
             problem={problems.price}
           >
             <div className="flex flex-col gap-6">
             <div className="grid gap-6 sm:grid-cols-2">
               <Input
-                label="Price" prefix="$" inputMode="decimal" placeholder="180000"
+                label={t('Editor.Price.Label')} prefix="$" inputMode="decimal" placeholder="180000"
                 error={errors.price?.message}
                 {...register('price', {
-                  required: 'Set a price.',
-                  pattern: { value: /^\d{1,10}(\.\d{1,2})?$/, message: 'Numbers only, like 180000.' },
+                  required: t('Editor.Price.Required'),
+                  pattern: { value: /^\d{1,10}(\.\d{1,2})?$/, message: t('Editor.Price.Pattern') },
                 })}
               />
 
               <Input
-                label="Stock" inputMode="numeric"
-                hint="At zero it stays listed but nobody can buy."
+                label={t('Editor.Stock.Label')} inputMode="numeric"
+                hint={t('Editor.Stock.Hint')}
                 error={errors.stock?.message}
                 {...register('stock', {
-                  required: 'Say how many you have.',
-                  min: { value: 0, message: 'Zero or more.' },
+                  required: t('Editor.Stock.Required'),
+                  min: { value: 0, message: t('Editor.Stock.Min') },
                 })}
               />
             </div>
@@ -726,17 +741,17 @@ const Editor = () => {
               name="availability" control={control}
               render={({ field }) => (
                 <Select
-                  label="Availability"
+                  label={t('Editor.Availability.Label')}
                   options={[
-                    { value: 'active', label: 'Available', subtitle: 'Buyers can see and buy it' },
-                    { value: 'paused', label: 'Paused', subtitle: 'Hidden for now, nothing lost' },
+                    { value: 'active', label: t('Editor.Summary.Available'), subtitle: t('Editor.Availability.Active.Subtitle') },
+                    { value: 'paused', label: t('Listings.Status.Paused.Label'), subtitle: t('Editor.Availability.Paused.Subtitle') },
                   ]}
                   value={empty ? null : field.value}
                   onChange={field.onChange}
                   // Out of stock is not on the list because it is not a choice.
                   // The control says so instead of offering a word the seller
                   // cannot pick and the shelf will overrule anyway.
-                  placeholder={empty ? 'Unavailable, no stock' : 'Choose one'}
+                  placeholder={empty ? t('Editor.Availability.Unavailable') : t('Common.ChooseOne')}
                   disabled={empty}
                   hint={availabilityHint}
                 />
@@ -748,21 +763,21 @@ const Editor = () => {
 
           <Accordion
             key={`delivery-${problems.delivery}`}
-            title="Location and delivery"
+            title={t('Editor.Section.Delivery')}
             summary={<DeliverySummary control={control} cities={cities} />}
             problem={problems.delivery}
           >
             <div className="flex flex-col gap-6">
             <Controller
               name="cityId" control={control}
-              rules={{ required: 'We need to know where it is.' }}
+              rules={{ required: t('Editor.Location.Required') }}
               render={({ field }) => (
                 <Combobox
-                  label="Location" options={cities}
+                  label={t('Editor.Location.Label')} options={cities}
                   value={field.value} onChange={field.onChange}
-                  placeholder={ready ? 'Start typing a city' : 'Loading…'}
+                  placeholder={ready ? t('ShopRequest.City.StartTyping') : t('Common.Loading')}
                   disabled={!ready}
-                  emptyMessage="No city by that name. Try the department instead."
+                  emptyMessage={t('ShopRequest.City.Empty')}
                   error={errors.cityId?.message}
                 />
               )}
@@ -770,7 +785,7 @@ const Editor = () => {
 
             <Controller
               name="delivery" control={control}
-              rules={{ validate: v => v.length > 0 || 'Pick at least one.' }}
+              rules={{ validate: v => v.length > 0 || t('Editor.Delivery.Required') }}
               render={({ field }) => (
                 <Delivery
                   options={deliveryOptions} value={field.value}
@@ -781,7 +796,7 @@ const Editor = () => {
             </div>
           </Accordion>
 
-          <Accordion title="Photos" summary={photoSummary}>
+          <Accordion title={t('Editor.Section.Photos')} summary={photoSummary}>
             <Photos
               tiles={tiles}
               busy={busy}
@@ -799,7 +814,7 @@ const Editor = () => {
               color={published ? 'primary' : 'neutral'}
               loading={isSubmitting || busy}
             >
-              {id ? 'Save changes' : 'Save as draft'}
+              {id ? t('Editor.SaveChanges') : t('Editor.SaveAsDraft')}
             </Button.Action>
 
             {(!product || !['active', 'paused'].includes(product.status)) && (
@@ -807,16 +822,16 @@ const Editor = () => {
                 type="button" disabled={busy}
                 onClick={handleSubmit(values => save(values, { publish: true }))}
               >
-                {id ? 'Save and publish' : 'Publish'}
+                {id ? t('Editor.SaveAndPublish') : t('Listings.Publish')}
               </Button.Action>
             )}
 
             {product && product.status !== 'archived' && (
               <Button.Action
                 type="button" variant="ghost" disabled={busy}
-                onClick={() => act('archive', 'Listing archived.')}
+                onClick={() => act('archive', t('Editor.ArchivedNotify'))}
               >
-                Archive
+                {t('Listings.Archive')}
               </Button.Action>
             )}
 
@@ -826,7 +841,7 @@ const Editor = () => {
                 className="ml-auto"
                 onClick={() => setConfirming(true)}
               >
-                Delete
+                {t('Listings.Delete')}
               </Button.Action>
             )}
           </div>
@@ -834,9 +849,9 @@ const Editor = () => {
 
         <Confirm
           open={confirming}
-          title={`Delete ${product?.title ?? 'this listing'}?`}
-          body="The listing and its photos go for good. Anything already sold keeps its record. To take it off the square without losing it, archive it instead."
-          confirmLabel="Delete listing"
+          title={t('Listings.DeleteConfirm.TitleNamed', { title: product?.title ?? t('Listings.DeleteConfirm.ThisListing') })}
+          body={t('Listings.DeleteConfirm.Body')}
+          confirmLabel={t('Listings.DeleteConfirm.Label')}
           loading={busy}
           onConfirm={remove}
           onCancel={() => setConfirming(false)}

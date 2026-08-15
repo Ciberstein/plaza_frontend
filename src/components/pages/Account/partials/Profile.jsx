@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Avatar, Button, Input, Select } from '../../../ui'
 import { useMeta } from '../../../../context/meta'
 import { notify } from '../../../../utils/notify'
@@ -9,6 +10,7 @@ import account from '../../../../services/account.services'
 const MAX_MB = 5
 
 const Profile = ({ me, onChange }) => {
+  const { t } = useTranslation()
   const fileInput = useRef(null)
   const [busy, setBusy] = useState(false)
 
@@ -30,7 +32,7 @@ const Profile = ({ me, onChange }) => {
   const save = async (values) => {
     try {
       onChange(await account.updateProfile(values))
-      notify('Your name was updated.', 'success')
+      notify(t('Profile.NameUpdated'), 'success')
     } catch {
       // Already reported by the response interceptor.
     }
@@ -44,13 +46,13 @@ const Profile = ({ me, onChange }) => {
     if (!file) return
 
     if (file.size > MAX_MB * 1024 * 1024) {
-      return notify(`That image is over ${MAX_MB} MB. Use a smaller one.`, 'error')
+      return notify(t('Profile.PhotoTooBig', { max: MAX_MB }), 'error')
     }
 
     setBusy(true)
     try {
       onChange(await account.uploadAvatar(file))
-      notify('Photo updated.', 'success')
+      notify(t('Profile.PhotoUpdated'), 'success')
     } catch {
       // Reported by the interceptor.
     } finally {
@@ -62,7 +64,7 @@ const Profile = ({ me, onChange }) => {
     setBusy(true)
     try {
       onChange(await account.deleteAvatar())
-      notify('Photo removed.', 'success')
+      notify(t('Profile.PhotoRemoved'), 'success')
     } catch {
       // Reported by the interceptor.
     } finally {
@@ -72,9 +74,9 @@ const Profile = ({ me, onChange }) => {
 
   return (
     <section className="panel p-6 sm:p-7">
-      <h2 className="font-display text-lg font-semibold text-ink">Profile</h2>
+      <h2 className="font-display text-lg font-semibold text-ink">{t('Profile.Title')}</h2>
       <p className="mt-1 text-sm leading-relaxed text-muted">
-        This is what buyers see next to anything you sell.
+        {t('Profile.Intro')}
       </p>
 
       <div className="mt-5 flex flex-wrap items-center gap-4">
@@ -82,11 +84,11 @@ const Profile = ({ me, onChange }) => {
 
         <div className="flex flex-wrap gap-2">
           <Button.Action variant="soft" size="sm" loading={busy} onClick={() => fileInput.current?.click()}>
-            {me.avatar ? 'Change photo' : 'Upload photo'}
+            {me.avatar ? t('Profile.ChangePhoto') : t('Profile.UploadPhoto')}
           </Button.Action>
           {me.avatar && (
             <Button.Action variant="ghost" size="sm" disabled={busy} onClick={removePhoto}>
-              Remove
+              {t('Profile.RemovePhoto')}
             </Button.Action>
           )}
           {/* The native control is hidden rather than styled: it cannot be
@@ -105,13 +107,13 @@ const Profile = ({ me, onChange }) => {
 
       <form onSubmit={handleSubmit(save)} className="mt-6 flex flex-col gap-4">
         <Input
-          label="Name"
-          hint="Shown on your listings and reviews."
+          label={t('Profile.Name.Label')}
+          hint={t('Profile.Name.Hint')}
           error={errors.username?.message}
           {...register('username', {
-            required: 'Pick a name to go by.',
-            minLength: { value: 3, message: 'Use at least 3 characters.' },
-            maxLength: { value: 40, message: 'Keep it under 40 characters.' },
+            required: t('Access.Username.Required'),
+            minLength: { value: 3, message: t('ShopRequest.Name.MinLength') },
+            maxLength: { value: 40, message: t('Profile.Name.MaxLength') },
           })}
         />
 
@@ -122,7 +124,7 @@ const Profile = ({ me, onChange }) => {
 
             render={({ field }) => (
               <Select
-                label="Country code"
+                label={t('Profile.CountryCode.Label')}
                 options={countries.map(c => ({
                   value: c.value,
                   label: c.label,
@@ -130,7 +132,7 @@ const Profile = ({ me, onChange }) => {
                 }))}
                 value={field.value}
                 onChange={field.onChange}
-                placeholder={metaReady ? 'Choose' : 'Loading…'}
+                placeholder={metaReady ? t('Profile.CountryCode.Placeholder') : t('Common.Loading')}
                 disabled={!metaReady}
                 error={errors.phoneCountryId?.message}
               />
@@ -138,19 +140,19 @@ const Profile = ({ me, onChange }) => {
           />
 
           <Input
-            label="Phone"
+            label={t('Profile.Phone.Label')}
             optional
             type="tel"
             inputMode="tel"
             autoComplete="tel-national"
             placeholder="300 123 4567"
-            hint="Only shared once an order is agreed. Your email is shared either way."
+            hint={t('Profile.Phone.Hint')}
             error={errors.phone?.message}
             {...register('phone', {
               validate: value => {
                 const digits = String(value ?? '').replace(/\D/g, '')
                 // Empty is how the field is cleared, so it cannot be an error.
-                return !digits || digits.length >= 6 || 'That number is too short.'
+                return !digits || digits.length >= 6 || t('Profile.Phone.TooShort')
               },
             })}
           />
@@ -158,7 +160,7 @@ const Profile = ({ me, onChange }) => {
 
         <div>
           <Button.Action type="submit" size="sm" loading={isSubmitting} disabled={!isDirty}>
-            Save changes
+            {t('Editor.SaveChanges')}
           </Button.Action>
         </div>
       </form>

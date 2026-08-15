@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Button, Input } from '../../../ui'
 import { notify } from '../../../../utils/notify'
 import account from '../../../../services/account.services'
@@ -13,6 +14,7 @@ import account from '../../../../services/account.services'
  * mailbox is proven reachable.
  */
 const Email = ({ me, onChange }) => {
+  const { t } = useTranslation()
   const [pending, setPending] = useState(null)
 
   const request = useForm({ defaultValues: { email: '', password: '' } })
@@ -33,7 +35,7 @@ const Email = ({ me, onChange }) => {
       onChange(await account.confirmEmailChange({ code }))
       setPending(null)
       confirm.reset()
-      notify('Your email address was changed.', 'success')
+      notify(t('Email.Changed'), 'success')
     } catch {
       // Reported by the interceptor.
     }
@@ -41,12 +43,12 @@ const Email = ({ me, onChange }) => {
 
   return (
     <section className="panel p-6 sm:p-7">
-      <h2 className="font-display text-lg font-semibold text-ink">Email</h2>
+      <h2 className="font-display text-lg font-semibold text-ink">{t('Access.Email.Label')}</h2>
       <p className="mt-1 text-sm leading-relaxed text-muted">
-        Currently <span className="font-medium text-ink">{me.email}</span>
+        {t('Email.Currently')} <span className="font-medium text-ink">{me.email}</span>
         {!me.verified && (
           <span className="ml-2 inline-block rounded-pz-sm bg-info px-1.5 py-0.5 align-middle text-[11px] font-semibold text-on-info">
-            Not confirmed
+            {t('Email.NotConfirmed')}
           </span>
         )}
       </p>
@@ -54,53 +56,52 @@ const Email = ({ me, onChange }) => {
       {pending ? (
         <form onSubmit={confirm.handleSubmit(apply)} className="mt-5 flex flex-col gap-4">
           <p className="text-sm text-ink">
-            We sent a code to <strong>{pending}</strong>. Enter it to finish the change.
-            Your current address keeps working until you do.
+            {t('Email.CodeSentTo', { email: pending })}
           </p>
 
           <Input
-            label="Code"
+            label={t('Account.Code.Label')}
             inputMode="numeric"
             autoComplete="one-time-code"
             placeholder="000000"
             error={confirm.formState.errors.code?.message}
             {...confirm.register('code', {
-              required: 'Enter the code we sent.',
-              pattern: { value: /^\d{6}$/, message: 'The code is six digits.' },
+              required: t('Account.Code.Required'),
+              pattern: { value: /^\d{6}$/, message: t('Account.Code.Pattern') },
             })}
           />
 
           <div className="flex gap-2">
             <Button.Action type="submit" size="sm" loading={confirm.formState.isSubmitting}>
-              Confirm change
+              {t('Email.ConfirmChange')}
             </Button.Action>
             <Button.Action variant="ghost" size="sm" onClick={() => setPending(null)}>
-              Cancel
+              {t('Shared.Confirm.Cancel')}
             </Button.Action>
           </div>
         </form>
       ) : (
         <form onSubmit={request.handleSubmit(ask)} className="mt-5 flex flex-col gap-4">
           <Input
-            label="New email"
+            label={t('Email.NewEmail.Label')}
             type="email"
             autoComplete="email"
             error={request.formState.errors.email?.message}
-            {...request.register('email', { required: 'Enter the address you want to move to.' })}
+            {...request.register('email', { required: t('Email.NewEmail.Required') })}
           />
 
           <Input
-            label="Your password"
+            label={t('Email.YourPassword.Label')}
             type="password"
             autoComplete="current-password"
-            hint="Asked for because this address can reset your password."
+            hint={t('Email.YourPassword.Hint')}
             error={request.formState.errors.password?.message}
-            {...request.register('password', { required: 'Your password is required.' })}
+            {...request.register('password', { required: t('Access.Password.Required') })}
           />
 
           <div>
             <Button.Action type="submit" size="sm" loading={request.formState.isSubmitting}>
-              Send code
+              {t('Email.SendCode')}
             </Button.Action>
           </div>
         </form>

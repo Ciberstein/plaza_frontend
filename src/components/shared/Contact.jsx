@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid'
 
 /**
@@ -11,12 +12,14 @@ import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid'
  * have to copy by hand while reading it off a screen.
  */
 const Contact = ({ who, email, phone }) => {
+  const { t } = useTranslation()
+
   if (!email && !phone) return null
 
   return (
     <div className="mt-4 rounded-pz-sm border border-line bg-sunk px-4 py-3">
       <p className="text-xs font-medium tracking-wide text-muted uppercase">
-        Reach the {who}
+        {t('Shared.Contact.Reach', { who: t(`Shared.Contact.Who.${who === 'buyer' ? 'Buyer' : 'Seller'}`) })}
       </p>
 
       <ul className="mt-2 flex flex-col gap-1.5">

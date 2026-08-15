@@ -1,17 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button, Input } from '../../ui'
 import { useAuth } from '../../../context/auth'
-
-// What an account is actually for, in the order it happens. Not a feature list:
-// each line is a thing the app will or will not let you do, and the third one
-// is the only reason anyone is ever asked to confirm an address.
-const WHAT_YOU_GET = [
-  'Buy from any shop on Plaza.',
-  'Sell under your own name, or open a shop.',
-  'Confirm your email to start listing.',
-]
 
 /**
  * One page for both signing in and creating an account.
@@ -21,7 +13,17 @@ const WHAT_YOU_GET = [
  * over. The toggle keeps whatever they already typed.
  */
 const Access = ({ mode = 'login' }) => {
+  const { t } = useTranslation()
   const [creating, setCreating] = useState(mode === 'register')
+
+  // What an account is actually for, in the order it happens. Not a feature
+  // list: each line is a thing the app will or will not let you do, and the
+  // third one is the only reason anyone is ever asked to confirm an address.
+  const WHAT_YOU_GET = [
+    t('Access.Get.Buy'),
+    t('Access.Get.Sell'),
+    t('Access.Get.Verify'),
+  ]
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -84,64 +86,64 @@ const Access = ({ mode = 'login' }) => {
 
         <div className="bg-surface p-7 sm:p-9">
           <h1 className="font-display text-2xl font-bold tracking-tight text-ink">
-            {creating ? 'Create your account' : 'Sign in'}
+            {creating ? t('Access.CreateTitle') : t('Header.Account.SignIn')}
           </h1>
           <p className="mt-1.5 text-sm text-muted">
-            {creating ? 'One account to buy and to sell.' : 'Welcome back.'}
+            {creating ? t('Access.CreateSubtitle') : t('Access.WelcomeBack')}
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-7 flex flex-col gap-5">
             {creating && (
               <Input
-                label="Username"
+                label={t('Access.Username.Label')}
                 autoComplete="username"
                 error={errors.username?.message}
-                {...register('username', { required: 'Pick a name to go by.' })}
+                {...register('username', { required: t('Access.Username.Required') })}
               />
             )}
 
             <Input
-              label="Email"
+              label={t('Access.Email.Label')}
               type="email"
               autoComplete="email"
               error={errors.email?.message}
-              {...register('email', { required: 'Your email is required.' })}
+              {...register('email', { required: t('Access.Email.Required') })}
             />
 
             <Input
-              label="Password"
+              label={t('Access.Password.Label')}
               type="password"
               autoComplete={creating ? 'new-password' : 'current-password'}
-              hint={creating ? 'At least 8 characters.' : undefined}
+              hint={creating ? t('Access.Password.Hint') : undefined}
               error={errors.password?.message}
               {...register('password', {
-                required: 'Your password is required.',
+                required: t('Access.Password.Required'),
                 minLength: creating
-                  ? { value: 8, message: 'Use at least 8 characters.' }
+                  ? { value: 8, message: t('Access.Password.MinLength') }
                   : undefined,
               })}
             />
 
             <Button.Action type="submit" full loading={isSubmitting} className="mt-1">
-              {creating ? 'Create account' : 'Sign in'}
+              {creating ? t('Access.CreateAccount') : t('Header.Account.SignIn')}
             </Button.Action>
           </form>
 
           <p className="mt-6 border-t border-line pt-5 text-sm text-muted">
-            {creating ? 'Already have an account?' : 'New to Plaza?'}{' '}
+            {creating ? t('Access.AlreadyHaveAccount') : t('Access.NewToPlaza')}{' '}
             <button
               type="button"
               onClick={() => setCreating(c => !c)}
               className="font-medium text-link hover:underline"
             >
-              {creating ? 'Sign in' : 'Create one'}
+              {creating ? t('Header.Account.SignIn') : t('Access.CreateOne')}
             </button>
           </p>
         </div>
       </div>
 
       <p className="mt-6 text-center text-sm">
-        <Link to="/" className="text-muted transition-colors hover:text-ink">Back to Plaza</Link>
+        <Link to="/" className="text-muted transition-colors hover:text-ink">{t('Common.BackToPlaza')}</Link>
       </p>
     </div>
   )

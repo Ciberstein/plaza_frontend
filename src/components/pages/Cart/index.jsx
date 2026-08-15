@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { MinusIcon, PhotoIcon, PlusIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { Button, Confirm } from '../../ui'
@@ -17,6 +18,7 @@ import { useResource } from '../../../hooks/useResource'
  * on read, and this simply gets a shorter list back and says how much shorter.
  */
 const Cart = () => {
+  const { t } = useTranslation()
   const { refresh } = useCart()
   const navigate = useNavigate()
 
@@ -71,7 +73,7 @@ const Cart = () => {
       )
       // Emptied on the server as part of placing it, so this only catches up.
       await again()
-      notify('Order placed. Each seller has been asked to confirm.', 'success')
+      notify(t('Cart.PlacedAll'), 'success')
       navigate(`/purchases#order-${order.id}`)
     } catch {
       // Reported by the interceptor, which names whatever ran out.
@@ -99,26 +101,24 @@ const Cart = () => {
   return (
     <div className="shell py-8 sm:py-10">
       <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-        Your cart
+        {t('Cart.Title')}
       </h1>
 
       {/* Said, not silently done. A basket shorter than you left it has to
           explain itself, or the site looks like it lost something. */}
       {removed > 0 && (
         <p className="mt-6 rounded-pz border border-line border-l-[3px] border-l-info bg-sunk px-4 py-3 text-sm text-ink">
-          {removed === 1
-            ? 'One listing was withdrawn by its seller and left your cart.'
-            : `${removed} listings were withdrawn by their sellers and left your cart.`}
+          {t('Cart.Removed', { count: removed })}
         </p>
       )}
 
       {items.length === 0 ? (
         <div className="panel mt-8 flex flex-col items-center gap-4 px-6 py-16 text-center">
-          <h2 className="font-display text-xl font-semibold text-ink">Nothing in it yet</h2>
+          <h2 className="font-display text-xl font-semibold text-ink">{t('Cart.Empty.Title')}</h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            Things you add stay here until you order them.
+            {t('Cart.Empty.Body')}
           </p>
-          <Button.Action as={Link} to="/" size="sm" className="mt-1">Browse Plaza</Button.Action>
+          <Button.Action as={Link} to="/" size="sm" className="mt-1">{t('Cart.Empty.Browse')}</Button.Action>
         </div>
       ) : (
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem]">
@@ -152,7 +152,7 @@ const Cart = () => {
                     </span>
                     {quantity > product.stock && (
                       <span className="ml-2 font-medium text-alert">
-                        only {product.stock} left
+                        {t('Cart.OnlyLeft', { count: product.stock })}
                       </span>
                     )}
                   </p>
@@ -160,7 +160,7 @@ const Cart = () => {
 
                 <div className="flex items-center gap-1 rounded-pz-sm border border-line-strong">
                   <Button.Icon
-                    size="sm" disabled={busy} aria-label="One fewer"
+                    size="sm" disabled={busy} aria-label={t('Cart.OneFewer')}
                     onClick={() => change(productId, quantity - 1)}
                   >
                     <MinusIcon className="size-4" />
@@ -169,7 +169,7 @@ const Cart = () => {
                     {quantity}
                   </span>
                   <Button.Icon
-                    size="sm" aria-label="One more"
+                    size="sm" aria-label={t('Cart.OneMore')}
                     disabled={busy || quantity >= product.stock}
                     onClick={() => change(productId, quantity + 1)}
                   >
@@ -178,7 +178,7 @@ const Cart = () => {
                 </div>
 
                 <Button.Icon
-                  color="danger" size="sm" disabled={busy} aria-label="Remove from cart"
+                  color="danger" size="sm" disabled={busy} aria-label={t('Cart.RemoveFromCart')}
                   onClick={() => drop(productId)}
                 >
                   <TrashIcon className="size-4" />
@@ -188,11 +188,11 @@ const Cart = () => {
           </ul>
 
           <div className="panel h-fit p-6">
-            <h2 className="font-display text-lg font-semibold text-ink">Summary</h2>
+            <h2 className="font-display text-lg font-semibold text-ink">{t('Cart.Summary.Title')}</h2>
 
             <p className="tabular mt-4 flex items-baseline justify-between">
               <span className="text-sm text-muted">
-                {items.length} {items.length === 1 ? 'listing' : 'listings'}
+                {t('Cart.Summary.Listings', { count: items.length })}
               </span>
               <span className="font-display text-2xl font-semibold text-ink">
                 {formatMoney(total, currency)}
@@ -200,8 +200,7 @@ const Cart = () => {
             </p>
 
             <p className="mt-4 text-xs leading-relaxed text-faint">
-              Nothing is paid here. Each seller confirms their part and you settle it
-              with them on handover.
+              {t('Cart.NothingPaidHere')}
             </p>
 
             <Button.Action
@@ -210,12 +209,12 @@ const Cart = () => {
               disabled={overStock.length > 0}
               onClick={() => setAsking(true)}
             >
-              Place order
+              {t('Product.Buy.ConfirmLabel')}
             </Button.Action>
 
             {overStock.length > 0 && (
               <p className="mt-3 text-xs leading-relaxed text-alert">
-                Lower the amounts that ran short before ordering.
+                {t('Cart.LowerAmounts')}
               </p>
             )}
           </div>
@@ -226,9 +225,9 @@ const Cart = () => {
           is the same on each part of it. */}
       <Confirm
         open={asking}
-        title="Place this order?"
-        body="You can call this off freely while the seller has not answered. Once they accept, they set the item aside for you and only they can cancel it. Nothing is paid through Plaza: you settle with them on handover."
-        confirmLabel="Place order"
+        title={t('Product.Buy.ConfirmTitle')}
+        body={t('Product.Buy.ConfirmBody')}
+        confirmLabel={t('Product.Buy.ConfirmLabel')}
         confirmColor="primary"
         loading={busy}
         onConfirm={place}

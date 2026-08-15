@@ -1,4 +1,5 @@
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from './auth'
 import { notify } from '../utils/notify'
 import favourites from '../services/favourites.services'
@@ -26,6 +27,7 @@ const FavouritesContext = createContext({
 export const useFavourites = () => use(FavouritesContext)
 
 export const FavouritesProvider = ({ children }) => {
+  const { t } = useTranslation()
   const { account, ready: session } = useAuth()
   const [kept, setKept] = useState(() => new Set())
   const [loaded, setLoaded] = useState(false)
@@ -56,7 +58,7 @@ export const FavouritesProvider = ({ children }) => {
   const toggle = useCallback(async (productId) => {
     // The heart is shown to everyone, because hiding it hides the feature. It
     // is the click that needs an account, and saying so beats a silent 401.
-    if (!account) return notify('Sign in to save things you like.', 'error')
+    if (!account) return notify(t('Favourites.SignInToSave'), 'error')
 
     const held = ids.has(productId)
 
@@ -79,7 +81,7 @@ export const FavouritesProvider = ({ children }) => {
         return next
       })
     }
-  }, [ids, account])
+  }, [ids, account, t])
 
   const value = useMemo(() => ({ ids, has, toggle, ready }), [ids, has, toggle, ready])
 

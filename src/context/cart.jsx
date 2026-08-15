@@ -1,4 +1,5 @@
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from './auth'
 import { notify } from '../utils/notify'
 import cart from '../services/cart.services'
@@ -28,6 +29,7 @@ const CartContext = createContext({
 export const useCart = () => use(CartContext)
 
 export const CartProvider = ({ children }) => {
+  const { t } = useTranslation()
   const { account, ready: session } = useAuth()
   const [count, setCount] = useState(0)
   const [loaded, setLoaded] = useState(false)
@@ -63,16 +65,16 @@ export const CartProvider = ({ children }) => {
   const add = useCallback(async (productId, quantity = 1) => {
     // Shown to everyone, because hiding the button hides the feature. It is the
     // click that needs an account, and saying so beats a silent 401.
-    if (!account) return notify('Sign in to add things to your cart.', 'error')
+    if (!account) return notify(t('Cart.SignInToAdd'), 'error')
 
     try {
       await cart.add(productId, quantity)
       await refresh()
-      notify('Added to your cart.', 'success')
+      notify(t('Cart.AddedToCart'), 'success')
     } catch {
       // The interceptor says why: withdrawn, out of stock, or your own.
     }
-  }, [account, refresh])
+  }, [account, refresh, t])
 
   const value = useMemo(
     () => ({ count: account ? count : 0, add, refresh, ready: !account || loaded }),

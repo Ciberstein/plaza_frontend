@@ -1,10 +1,12 @@
 import { Controller, useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeftIcon } from '@heroicons/react/20/solid'
 import { Button, Checkbox, Combobox, Input, Select, Textarea } from '../../ui'
 import { useMeta } from '../../../context/meta'
 import { notify } from '../../../utils/notify'
 import shops from '../../../services/shops.services'
+import { withShopShippingLabels } from '../../../utils/vocabulary'
 
 /**
  * Requesting a shop.
@@ -18,9 +20,11 @@ import shops from '../../../services/shops.services'
  * and sending it for review is a deliberate second action from the dashboard.
  */
 const ShopRequest = () => {
+  const { t } = useTranslation()
   // The same lists the API validates against, so the form cannot offer a value
   // the server will refuse.
-  const { cities, shipping, ready } = useMeta()
+  const { cities, shipping: rawShipping, ready } = useMeta()
+  const shipping = withShopShippingLabels(t, rawShipping)
   const navigate = useNavigate()
 
   const {
@@ -42,7 +46,7 @@ const ShopRequest = () => {
     void terms
     try {
       const shop = await shops.create(values)
-      notify(`${shop.name} was saved. Send it for review when it is ready.`, 'success')
+      notify(t('ShopRequest.Saved', { name: shop.name }), 'success')
       navigate('/dashboard')
     } catch {
       // Already reported by the response interceptor.
@@ -57,15 +61,14 @@ const ShopRequest = () => {
           className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-ink"
         >
           <ArrowLeftIcon className="size-4" />
-          Selling on Plaza
+          {t('ShopRequest.BackLink')}
         </Link>
 
         <h1 className="rule-accent mt-5 font-display text-3xl font-bold tracking-tight text-ink">
-          Request a shop
+          {t('ShopRequest.Title')}
         </h1>
         <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-muted">
-          You do not need a shop to sell. A shop gives what you sell its own name, logo
-          and storefront, and Plaza reviews every request before it opens.
+          {t('ShopRequest.Intro')}
         </p>
 
         <form
@@ -73,29 +76,29 @@ const ShopRequest = () => {
           className="panel mt-7 flex flex-col gap-6 p-6 sm:p-7"
         >
           <Input
-            label="Shop name"
+            label={t('ShopRequest.Name.Label')}
             placeholder="Tejidos del Sur"
-            hint="This is the name buyers see on every listing."
+            hint={t('ShopRequest.Name.Hint')}
             error={errors.name?.message}
             {...register('name', {
-              required: 'Give the shop a name buyers will recognise.',
-              minLength: { value: 3, message: 'Use at least 3 characters.' },
+              required: t('ShopRequest.Name.Required'),
+              minLength: { value: 3, message: t('ShopRequest.Name.MinLength') },
             })}
           />
 
           <Controller
             name="cityId"
             control={control}
-            rules={{ required: 'We need a city to estimate delivery times.' }}
+            rules={{ required: t('ShopRequest.City.Required') }}
             render={({ field }) => (
               <Combobox
-                label="City"
+                label={t('ShopRequest.City.Label')}
                 options={cities}
                 value={field.value}
                 onChange={field.onChange}
-                placeholder={ready ? 'Start typing a city' : 'Loading…'}
+                placeholder={ready ? t('ShopRequest.City.StartTyping') : t('Common.Loading')}
                 disabled={!ready}
-                emptyMessage="No city by that name. Try the department instead."
+                emptyMessage={t('ShopRequest.City.Empty')}
                 error={errors.cityId?.message}
               />
             )}
@@ -106,7 +109,7 @@ const ShopRequest = () => {
             control={control}
             render={({ field }) => (
               <Select
-                label="How orders get delivered"
+                label={t('ShopRequest.Shipping.Label')}
                 options={shipping}
                 value={field.value}
                 onChange={field.onChange}
@@ -116,23 +119,23 @@ const ShopRequest = () => {
           />
 
           <Textarea
-            label="What you sell"
+            label={t('ShopRequest.Description.Label')}
             optional
             rows={3}
-            placeholder="Handwoven bags and blankets, made in Nariño."
+            placeholder={t('ShopRequest.Description.Placeholder')}
             error={errors.description?.message}
             {...register('description', {
-              maxLength: { value: 300, message: 'Keep it under 300 characters.' },
+              maxLength: { value: 300, message: t('ShopRequest.Description.MaxLength') },
             })}
           />
 
           <Controller
             name="terms"
             control={control}
-            rules={{ required: 'Accept the seller terms to request a shop.' }}
+            rules={{ required: t('ShopRequest.Terms.Required') }}
             render={({ field }) => (
               <Checkbox
-                label="I accept the seller terms and the commission on each sale."
+                label={t('ShopRequest.Terms.Label')}
                 checked={field.value}
                 onChange={field.onChange}
                 error={errors.terms?.message}
@@ -142,10 +145,10 @@ const ShopRequest = () => {
 
           <div className="flex flex-wrap gap-3 border-t border-line pt-6">
             <Button.Action type="submit" loading={isSubmitting}>
-              Save request
+              {t('ShopRequest.Save')}
             </Button.Action>
             <Button.Action variant="ghost" type="reset">
-              Clear the form
+              {t('ShopRequest.Clear')}
             </Button.Action>
           </div>
         </form>

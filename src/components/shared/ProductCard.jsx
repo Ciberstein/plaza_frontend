@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronLeftIcon, ChevronRightIcon, HeartIcon } from '@heroicons/react/20/solid'
 import { HeartIcon as HeartOutline, PhotoIcon } from '@heroicons/react/24/outline'
@@ -7,13 +8,14 @@ import { useAuth } from '../../context/auth'
 import { useFavourites } from '../../context/favourites'
 import { formatMoney } from '../../utils/money'
 
-// Said in the shopper's words, not the seller's. "like_new" is a database value.
-const CONDITION = {
+// The database value, mapped to the translation key that says it in the
+// shopper's words. "like_new" is what the column holds; nobody reads that.
+const CONDITION_KEY = {
   new: 'New',
-  like_new: 'Like new',
-  good: 'Good condition',
-  acceptable: 'Used',
-  for_parts: 'For parts',
+  like_new: 'LikeNew',
+  good: 'Good',
+  acceptable: 'Acceptable',
+  for_parts: 'ForParts',
 }
 
 const DAY = 24 * 60 * 60 * 1000
@@ -35,6 +37,7 @@ const OPENED_AT = Date.now()
  * markup, so the anchor is the outer element and they preventDefault instead.
  */
 const ProductCard = ({ product, index = 0, state = 'active' }) => {
+  const { t } = useTranslation()
   const { account } = useAuth()
   const { has, toggle } = useFavourites()
   const [shot, setShot] = useState(0)
@@ -46,7 +49,9 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
       : []
 
   const seller = product.shop?.name ?? product.seller?.username
-  const condition = CONDITION[product.condition]
+  const condition = product.condition
+    ? t(`Shared.ProductCard.Condition.${CONDITION_KEY[product.condition]}`)
+    : null
   const kept = has(product.id)
   const mine = Boolean(account?.id) && account.id === product.seller?.id
 
@@ -100,13 +105,13 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
 
         {paused && (
           <span className="absolute inset-x-0 bottom-0 z-10 bg-ink/85 py-1.5 text-center text-[11px] font-semibold tracking-wide text-ground uppercase">
-            Paused by the seller
+            {t('Shared.ProductCard.Paused')}
           </span>
         )}
 
         {fresh && !paused && (
           <span className="absolute top-2 left-2 rounded-pz-sm bg-ink/85 px-2 py-1 text-[11px] font-semibold text-ground">
-            Just listed
+            {t('Shared.ProductCard.JustListed')}
           </span>
         )}
 
@@ -120,11 +125,11 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
           type="button"
           onClick={keep}
           disabled={mine}
-          title={mine ? 'Your own listing' : undefined}
+          title={mine ? t('Shared.ProductCard.YourListing') : undefined}
           aria-label={
             mine
-              ? 'Your own listing'
-              : kept ? 'Remove from favourites' : 'Save to favourites'
+              ? t('Shared.ProductCard.YourListing')
+              : kept ? t('Shared.ProductCard.RemoveFavourite') : t('Shared.ProductCard.SaveFavourite')
           }
           aria-pressed={mine ? undefined : kept}
           className={clsx(
@@ -148,7 +153,7 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
               <button
                 type="button"
                 onClick={e => step(e, -1)}
-                aria-label="Previous photo"
+                aria-label={t('Shared.ProductCard.PreviousPhoto')}
                 className="pointer-events-auto flex size-7 cursor-pointer items-center justify-center rounded-full bg-surface/90 text-ink shadow-sm transition-colors hover:bg-surface"
               >
                 <ChevronLeftIcon className="size-4" />
@@ -159,7 +164,7 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
               <button
                 type="button"
                 onClick={e => step(e, 1)}
-                aria-label="Next photo"
+                aria-label={t('Shared.ProductCard.NextPhoto')}
                 className="pointer-events-auto flex size-7 cursor-pointer items-center justify-center rounded-full bg-surface/90 text-ink shadow-sm transition-colors hover:bg-surface"
               >
                 <ChevronRightIcon className="size-4" />

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { PhotoIcon } from '@heroicons/react/24/outline'
@@ -10,36 +11,43 @@ import { useResource } from '../../../hooks/useResource'
 
 // What each state means for the seller and what happens next, in their words.
 // "Draft" on its own tells someone nothing about why nobody can see their
-// listing or what to do about it.
-const STATUS = {
-  draft: {
-    label: 'Draft',
-    tone: 'bg-sunk text-muted',
-    note: 'Only you can see this. Publish it when the photos are ready.',
-  },
-  active: {
-    label: 'Published',
-    tone: 'bg-good-tint text-good',
-    note: null,
-  },
-  paused: {
-    label: 'Paused',
-    tone: 'bg-sunk text-muted',
-    note: 'Hidden by you. Set it back to available on the listing itself.',
-  },
-  out_of_stock: {
-    label: 'Out of stock',
-    tone: 'bg-info-tint text-ink',
-    note: 'Still listed, but nobody can buy it until you add stock.',
-  },
-  archived: {
-    label: 'Archived',
-    tone: 'bg-sunk text-muted',
-    note: 'Taken off the square. You can publish it again whenever you want.',
-  },
+// listing or what to do about it. Built from `t` rather than held as a
+// module-level constant, because the active language is not known until
+// render.
+const statusOf = (t, status) => {
+  const table = {
+    draft: {
+      label: t('Listings.Status.Draft.Label'),
+      tone: 'bg-sunk text-muted',
+      note: t('Listings.Status.Draft.Note'),
+    },
+    active: {
+      label: t('Listings.Status.Published.Label'),
+      tone: 'bg-good-tint text-good',
+      note: null,
+    },
+    paused: {
+      label: t('Listings.Status.Paused.Label'),
+      tone: 'bg-sunk text-muted',
+      note: t('Listings.Status.Paused.Note'),
+    },
+    out_of_stock: {
+      label: t('Listings.Status.OutOfStock.Label'),
+      tone: 'bg-info-tint text-ink',
+      note: t('Listings.Status.OutOfStock.Note'),
+    },
+    archived: {
+      label: t('Listings.Status.Archived.Label'),
+      tone: 'bg-sunk text-muted',
+      note: t('Listings.Status.Archived.Note'),
+    },
+  }
+
+  return table[status] ?? { label: status, tone: 'bg-sunk text-muted', note: null }
 }
 
 const Listings = () => {
+  const { t } = useTranslation()
   const load = useCallback(() => products.mine(), [])
   const { data, loading } = useResource(load, 'mine')
 
@@ -70,7 +78,7 @@ const Listings = () => {
     try {
       await products.remove(deleting.id)
       setList(rows.filter(row => row.id !== deleting.id))
-      notify(`${deleting.title} was deleted.`, 'success')
+      notify(t('Listings.Deleted', { title: deleting.title }), 'success')
       setDeleting(null)
     } catch {
       // Reported by the interceptor. The dialog stays open so the person can
@@ -86,16 +94,16 @@ const Listings = () => {
     if (['active', 'paused', 'out_of_stock'].includes(product.status)) {
       return (
         <Button.Action variant="ghost" size="sm" loading={working}
-          onClick={() => run(product, 'archive', p => `${p.title} was archived.`)}>
-          Archive
+          onClick={() => run(product, 'archive', p => t('Listings.Archived', { title: p.title }))}>
+          {t('Listings.Archive')}
         </Button.Action>
       )
     }
 
     return (
       <Button.Action size="sm" loading={working}
-        onClick={() => run(product, 'publish', p => `${p.title} is live.`)}>
-        Publish
+        onClick={() => run(product, 'publish', p => t('Listings.Published', { title: p.title }))}>
+        {t('Listings.Publish')}
       </Button.Action>
     )
   }
@@ -105,13 +113,13 @@ const Listings = () => {
       <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
         <div className="max-w-prose">
           <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-            Your listings
+            {t('Listings.Title')}
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-muted">
-            Everything you sell, under your own name or under one of your shops.
+            {t('Listings.Intro')}
           </p>
         </div>
-        <Button.Action as={Link} to="/listings/new" size="sm">List an item</Button.Action>
+        <Button.Action as={Link} to="/listings/new" size="sm">{t('Sell.Get.ListItem')}</Button.Action>
       </div>
 
       <div className="mt-8">
@@ -129,21 +137,16 @@ const Listings = () => {
           </div>
         ) : rows.length === 0 ? (
           <div className="panel flex flex-col items-center gap-4 px-6 py-16 text-center">
-            <h2 className="font-display text-xl font-semibold text-ink">Nothing listed yet</h2>
+            <h2 className="font-display text-xl font-semibold text-ink">{t('Listings.Empty.Title')}</h2>
             <p className="max-w-sm text-sm leading-relaxed text-muted">
-              A listing needs a photo, a price and a category. It stays a draft until
-              you publish it.
+              {t('Listings.Empty.Body')}
             </p>
-            <Button.Action as={Link} to="/listings/new" size="sm" className="mt-1">List an item</Button.Action>
+            <Button.Action as={Link} to="/listings/new" size="sm" className="mt-1">{t('Sell.Get.ListItem')}</Button.Action>
           </div>
         ) : (
           <ul className="panel divide-y divide-line">
             {rows.map(product => {
-              const status = STATUS[product.status] ?? {
-                label: product.status,
-                tone: 'bg-sunk text-muted',
-                note: null,
-              }
+              const status = statusOf(t, product.status)
               const cover = product.images?.[0]?.url
 
               return (
@@ -177,20 +180,20 @@ const Listings = () => {
                       </div>
                       <p className="tabular text-sm text-muted">
                         {formatMoney(product.price, product.currency)}
-                        <span className="text-faint"> · {product.stock} in stock</span>
+                        <span className="text-faint"> · {t('Listings.InStock', { count: product.stock })}</span>
                       </p>
                     </div>
 
                     <div className="flex shrink-0 flex-wrap gap-2">
                       <Button.Action as={Link} to={`/listings/${product.id}`} variant="outline" color="neutral" size="sm">
-                        Edit
+                        {t('Listings.Edit')}
                       </Button.Action>
                       {actions(product)}
                       <Button.Action
                         variant="ghost" color="danger" size="sm"
                         onClick={() => setDeleting(product)}
                       >
-                        Delete
+                        {t('Listings.Delete')}
                       </Button.Action>
                     </div>
                   </div>
@@ -207,9 +210,9 @@ const Listings = () => {
 
       <Confirm
         open={Boolean(deleting)}
-        title={`Delete ${deleting?.title ?? 'this listing'}?`}
-        body="The listing and its photos go for good. Anything already sold keeps its record. To take it off the square without losing it, archive it instead."
-        confirmLabel="Delete listing"
+        title={t('Listings.DeleteConfirm.TitleNamed', { title: deleting?.title ?? t('Listings.DeleteConfirm.ThisListing') })}
+        body={t('Listings.DeleteConfirm.Body')}
+        confirmLabel={t('Listings.DeleteConfirm.Label')}
         loading={busy === deleting?.id}
         onConfirm={remove}
         onCancel={() => setDeleting(null)}

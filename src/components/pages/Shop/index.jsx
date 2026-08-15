@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { MapPinIcon, TruckIcon } from '@heroicons/react/20/solid'
 import { Button, ShopLogo } from '../../ui'
@@ -7,6 +8,7 @@ import ProductCard from '../../shared/ProductCard'
 import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
 import { useResource } from '../../../hooks/useResource'
+import { withShopShippingLabels } from '../../../utils/vocabulary'
 
 // One fact about the shop: where it is, how it ships. Aliased inside the body
 // rather than renamed in the parameter list, because the lint rule that lets
@@ -23,8 +25,9 @@ const Fact = ({ icon, children }) => {
 }
 
 const Shop = () => {
+  const { t } = useTranslation()
   const { slug } = useParams()
-  const { cities, shipping } = useMeta()
+  const { cities, shipping: rawShipping } = useMeta()
 
   const load = useCallback(() => shops.storefront(slug), [slug])
   const { data: shop, error, loading } = useResource(load, slug)
@@ -56,18 +59,18 @@ const Shop = () => {
     return (
       <div className="shell py-8 sm:py-10">
         <div className="panel mx-auto flex max-w-md flex-col items-center gap-4 px-6 py-16 text-center">
-          <h1 className="font-display text-xl font-semibold text-ink">No shop at this address</h1>
+          <h1 className="font-display text-xl font-semibold text-ink">{t('Shop.NotFound.Title')}</h1>
           <p className="text-sm leading-relaxed text-muted">
-            It may have closed, or the link may be wrong.
+            {t('Shop.NotFound.Body')}
           </p>
-          <Button.Action as={Link} to="/" variant="outline" color="neutral" size="sm">Back to Plaza</Button.Action>
+          <Button.Action as={Link} to="/" variant="outline" color="neutral" size="sm">{t('Common.BackToPlaza')}</Button.Action>
         </div>
       </div>
     )
   }
 
   const city = cities.find(c => c.value === shop.cityId)
-  const delivery = shipping.find(s => s.value === shop.shipping)
+  const delivery = withShopShippingLabels(t, rawShipping).find(s => s.value === shop.shipping)
 
   return (
     <div className="shell flex flex-col gap-8 py-8 sm:py-10">
@@ -93,7 +96,7 @@ const Shop = () => {
       </header>
 
       <section>
-        <h2 className="rule-accent font-display text-xl font-semibold text-ink">Products</h2>
+        <h2 className="rule-accent font-display text-xl font-semibold text-ink">{t('Shop.ProductsTitle')}</h2>
 
         {loadingStock ? (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" aria-hidden>
@@ -109,7 +112,7 @@ const Shop = () => {
           </div>
         ) : (stock ?? []).length === 0 ? (
           <div className="panel mt-6 px-6 py-16 text-center">
-            <p className="text-sm text-muted">This shop has not listed anything yet.</p>
+            <p className="text-sm text-muted">{t('Shop.NoProducts')}</p>
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

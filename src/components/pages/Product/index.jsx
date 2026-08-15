@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapPinIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
@@ -11,14 +12,16 @@ import orders from '../../../services/orders.services'
 import { formatMoney } from '../../../utils/money'
 import products from '../../../services/products.services'
 import { useResource } from '../../../hooks/useResource'
+import { withDeliveryLabels } from '../../../utils/vocabulary'
 
-// The shopper's words. `like_new` is a database value.
-const CONDITION = {
+// The database value, mapped to the translation key that says it in the
+// shopper's words. "like_new" is what the column holds; nobody reads that.
+const CONDITION_KEY = {
   new: 'New',
-  like_new: 'Like new',
-  good: 'Good condition',
-  acceptable: 'Used, and it shows',
-  for_parts: 'For parts',
+  like_new: 'LikeNew',
+  good: 'Good',
+  acceptable: 'Acceptable',
+  for_parts: 'ForParts',
 }
 
 /**
@@ -29,6 +32,7 @@ const CONDITION = {
  * of them is to put them in the same frame one after the other.
  */
 const Gallery = ({ images, title }) => {
+  const { t } = useTranslation()
   const [active, setActive] = useState(0)
   const current = images[active]
 
@@ -55,7 +59,7 @@ const Gallery = ({ images, title }) => {
               <button
                 type="button"
                 onClick={() => setActive(index)}
-                aria-label={`Photo ${index + 1} of ${images.length}`}
+                aria-label={t('Product.Gallery.PhotoOf', { n: index + 1, total: images.length })}
                 aria-current={index === active}
                 className={clsx(
                   'block w-full cursor-pointer overflow-hidden rounded-pz-sm border transition-colors',
@@ -74,6 +78,8 @@ const Gallery = ({ images, title }) => {
 
 /** Who is selling it: a shop, or a person. Never both. */
 const Seller = ({ product }) => {
+  const { t } = useTranslation()
+
   if (product.shop) {
     return (
       <Link
@@ -83,7 +89,7 @@ const Seller = ({ product }) => {
         <ShopLogo shop={product.shop} size="sm" />
         <span className="min-w-0">
           <span className="block truncate font-medium text-ink">{product.shop.name}</span>
-          <span className="block text-xs text-muted">Visit the shop</span>
+          <span className="block text-xs text-muted">{t('Product.Seller.VisitShop')}</span>
         </span>
       </Link>
     )
@@ -94,7 +100,7 @@ const Seller = ({ product }) => {
       <Avatar account={product.seller} size="sm" />
       <span className="min-w-0">
         <span className="block truncate font-medium text-ink">{product.seller?.username}</span>
-        <span className="block text-xs text-muted">Sold by this person directly</span>
+        <span className="block text-xs text-muted">{t('Product.Seller.SoldDirectly')}</span>
       </span>
     </div>
   )
@@ -110,6 +116,7 @@ const Seller = ({ product }) => {
  * anything.
  */
 const Description = ({ text }) => {
+  const { t } = useTranslation()
   const ref = useRef(null)
   const [open, setOpen] = useState(false)
   const [clipped, setClipped] = useState(false)
@@ -146,7 +153,7 @@ const Description = ({ text }) => {
           onClick={() => setOpen(v => !v)}
           className="mt-3 cursor-pointer text-sm font-medium text-link hover:underline"
         >
-          {open ? 'Read less' : 'Read more'}
+          {open ? t('Product.Description.ReadLess') : t('Product.Description.ReadMore')}
         </button>
       )}
     </>
@@ -161,6 +168,7 @@ const Description = ({ text }) => {
  * is usually bought one at a time.
  */
 const Buy = ({ product }) => {
+  const { t } = useTranslation()
   const { account, ready } = useAuth()
   const { add } = useCart()
   const navigate = useNavigate()
@@ -179,7 +187,7 @@ const Buy = ({ product }) => {
   if (mine) {
     return (
       <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
-        This is your own listing.
+        {t('Product.Buy.YourListing')}
       </p>
     )
   }
@@ -190,11 +198,8 @@ const Buy = ({ product }) => {
   if (paused) {
     return (
       <p className="rounded-pz border border-line border-l-[3px] border-l-info bg-sunk px-4 py-3 text-sm text-ink">
-        <span className="font-medium">The seller paused this listing.</span>{' '}
-        <span className="text-muted">
-          It is not for sale right now. Save it and you will have it here if it
-          comes back.
-        </span>
+        <span className="font-medium">{t('Product.Buy.PausedTitle')}</span>{' '}
+        <span className="text-muted">{t('Product.Buy.PausedBody')}</span>
       </p>
     )
   }
@@ -202,7 +207,7 @@ const Buy = ({ product }) => {
   if (gone) {
     return (
       <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
-        None left right now.
+        {t('Product.Buy.NoneLeft')}
       </p>
     )
   }
@@ -217,7 +222,7 @@ const Buy = ({ product }) => {
         size="lg"
         full
       >
-        Sign in to buy
+        {t('Product.Buy.SignInToBuy')}
       </Button.Action>
     )
   }
@@ -227,7 +232,7 @@ const Buy = ({ product }) => {
     setBusy(true)
     try {
       const order = await orders.place([{ productId: product.id, quantity: 1 }])
-      notify('Order placed. The seller has been asked to confirm.', 'success')
+      notify(t('Product.Buy.Placed'), 'success')
       navigate(`/purchases#order-${order.id}`)
     } catch {
       // Reported by the interceptor, which names what ran out.
@@ -239,7 +244,7 @@ const Buy = ({ product }) => {
   return (
     <div className="flex flex-col gap-3">
       <Button.Action size="lg" full loading={busy} onClick={() => setAsking(true)}>
-        Buy now
+        {t('Product.Buy.Now')}
       </Button.Action>
 
       {/* Asked before the order, not explained after it. What changes at the
@@ -247,9 +252,9 @@ const Buy = ({ product }) => {
           their own, and by then it is too late to matter. */}
       <Confirm
         open={asking}
-        title="Place this order?"
-        body="You can call this off freely while the seller has not answered. Once they accept, they set the item aside for you and only they can cancel it. Nothing is paid through Plaza: you settle with them on handover."
-        confirmLabel="Place order"
+        title={t('Product.Buy.ConfirmTitle')}
+        body={t('Product.Buy.ConfirmBody')}
+        confirmLabel={t('Product.Buy.ConfirmLabel')}
         confirmColor="primary"
         loading={busy}
         onConfirm={buyNow}
@@ -262,15 +267,16 @@ const Buy = ({ product }) => {
         // too would announce a success the request had not had yet.
         onClick={() => add(product.id)}
       >
-        Add to cart
+        {t('Product.Buy.AddToCart')}
       </Button.Action>
     </div>
   )
 }
 
 const Product = () => {
+  const { t } = useTranslation()
   const { id } = useParams()
-  const { cities, delivery: deliveryOptions } = useMeta()
+  const { cities, delivery: rawDelivery } = useMeta()
 
   const load = useCallback(() => products.read(id), [id])
   const { data: product, error, loading } = useResource(load, id)
@@ -292,12 +298,12 @@ const Product = () => {
     return (
       <div className="shell py-8 sm:py-10">
         <div className="panel mx-auto flex max-w-md flex-col items-center gap-4 px-6 py-16 text-center">
-          <h1 className="font-display text-xl font-semibold text-ink">This listing is gone</h1>
+          <h1 className="font-display text-xl font-semibold text-ink">{t('Product.NotFound.Title')}</h1>
           <p className="text-sm leading-relaxed text-muted">
-            It may have sold, been taken down, or the link may be wrong.
+            {t('Product.NotFound.Body')}
           </p>
           <Button.Action as={Link} to="/" variant="outline" color="neutral" size="sm">
-            Back to Plaza
+            {t('Common.BackToPlaza')}
           </Button.Action>
         </div>
       </div>
@@ -305,7 +311,7 @@ const Product = () => {
   }
 
   const city = cities.find(c => c.value === product.cityId)
-  const ways = deliveryOptions.filter(option => product.delivery?.includes(option.value))
+  const ways = withDeliveryLabels(t, rawDelivery.filter(option => product.delivery?.includes(option.value)))
 
   return (
     <div className="shell py-8 sm:py-10">
@@ -315,7 +321,7 @@ const Product = () => {
         <div className="flex flex-col gap-6">
           <div>
             {product.condition && (
-              <span className="text-sm text-muted">{CONDITION[product.condition]}</span>
+              <span className="text-sm text-muted">{t(`Product.Condition.${CONDITION_KEY[product.condition]}`)}</span>
             )}
 
             <h1 className="mt-1 font-display text-2xl leading-tight font-bold tracking-tight text-ink sm:text-3xl">
@@ -328,8 +334,8 @@ const Product = () => {
 
             <p className="mt-2 text-sm text-muted">
               {product.stock > 0
-                ? `${product.stock} available`
-                : 'None left right now'}
+                ? t('Product.Stock.Available', { count: product.stock })
+                : t('Product.Stock.NoneLeft')}
             </p>
           </div>
 
@@ -339,7 +345,7 @@ const Product = () => {
 
           {ways.length > 0 && (
             <section>
-              <h2 className="font-display text-base font-semibold text-ink">How you can get it</h2>
+              <h2 className="font-display text-base font-semibold text-ink">{t('Product.DeliveryOptionsTitle')}</h2>
               <ul className="mt-3 flex flex-col gap-2">
                 {ways.map(way => (
                   <li key={way.value} className="text-sm text-ink">
@@ -364,7 +370,7 @@ const Product = () => {
 
       {product.description && (
         <section className="mt-10 border-t border-line pt-8">
-          <h2 className="font-display text-lg font-semibold text-ink">Description</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t('Product.DescriptionTitle')}</h2>
           <div className="mt-4">
             <Description text={product.description} />
           </div>

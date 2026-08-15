@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, Textarea } from '../../ui'
 import Contact from '../../shared/Contact'
+import { useLanguage } from '../../../context/language'
+import { formatDate } from '../../../utils/date'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
 import orders from '../../../services/orders.services'
@@ -10,31 +13,38 @@ import { useResource } from '../../../hooks/useResource'
 
 // The same rows /purchases shows, said from the other side. A seller reading
 // "waiting on the seller" about their own order learns nothing; they need to be
-// told it is waiting on them.
-const STATUS = {
-  pending: {
-    label: 'Needs your answer',
-    tone: 'bg-info text-on-info',
-    note: 'The stock is already held back. Confirm it or let it go.',
-  },
-  confirmed: {
-    label: 'Confirmed',
-    tone: 'bg-good-tint text-good',
-    note: 'Arrange the handover with the buyer, then mark it delivered.',
-  },
-  delivered: {
-    label: 'Delivered',
-    tone: 'bg-sunk text-muted',
-    note: null,
-  },
-  cancelled: {
-    label: 'Cancelled',
-    tone: 'bg-sunk text-muted',
-    note: null,
-  },
+// told it is waiting on them. Built from `t` rather than held as a module-level
+// constant, because the active language is not known until render.
+const statusOf = (t, status) => {
+  const table = {
+    pending: {
+      label: t('Sales.Status.Pending.Label'),
+      tone: 'bg-info text-on-info',
+      note: t('Sales.Status.Pending.Note'),
+    },
+    confirmed: {
+      label: t('Purchases.Status.Confirmed.Label'),
+      tone: 'bg-good-tint text-good',
+      note: t('Sales.Status.Confirmed.Note'),
+    },
+    delivered: {
+      label: t('Purchases.Status.Delivered.Label'),
+      tone: 'bg-sunk text-muted',
+      note: null,
+    },
+    cancelled: {
+      label: t('Purchases.Status.Cancelled.Label'),
+      tone: 'bg-sunk text-muted',
+      note: null,
+    },
+  }
+
+  return table[status] ?? { label: status, tone: 'bg-sunk text-muted', note: null }
 }
 
 const Sales = () => {
+  const { t } = useTranslation()
+  const { language } = useLanguage()
   const load = useCallback(() => orders.sales(), [])
   const { data, loading } = useResource(load, 'sales')
 
@@ -64,7 +74,7 @@ const Sales = () => {
     setBusy(cancelling.id)
     try {
       replace(await orders.cancelSale(cancelling.id, reason))
-      notify('Order cancelled, and the stock is back on sale.', 'success')
+      notify(t('Sales.Cancelled'), 'success')
       setCancelling(null)
       setReason('')
     } catch {
@@ -87,30 +97,27 @@ const Sales = () => {
     <div className="shell py-8 sm:py-10">
       <div className="max-w-prose">
         <h1 className="rule-accent font-display text-3xl font-bold tracking-tight text-ink">
-          Your sales
+          {t('Sales.Title')}
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-muted">
-          What people have asked to buy from you. Nothing is paid through Plaza; you
-          settle with the buyer on handover.
+          {t('Sales.Subtitle')}
         </p>
       </div>
 
       {rows.length === 0 ? (
         <div className="panel mt-8 flex flex-col items-center gap-4 px-6 py-16 text-center">
-          <h2 className="font-display text-xl font-semibold text-ink">Nothing sold yet</h2>
+          <h2 className="font-display text-xl font-semibold text-ink">{t('Sales.Empty.Title')}</h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            Orders land here the moment someone places one.
+            {t('Sales.Empty.Body')}
           </p>
           <Button.Action as={Link} to="/listings" size="sm" className="mt-1">
-            Your listings
+            {t('Header.Account.YourListings')}
           </Button.Action>
         </div>
       ) : (
         <ul className="mt-8 flex flex-col gap-3">
           {rows.map(sale => {
-            const status = STATUS[sale.status] ?? {
-              label: sale.status, tone: 'bg-sunk text-muted', note: null,
-            }
+            const status = statusOf(t, sale.status)
             const working = busy === sale.id
 
             return (
@@ -128,10 +135,9 @@ const Sales = () => {
                       </span>
                     </div>
                     <p className="tabular mt-1 text-xs text-faint">
-                      Order #{sale.orderId}
-                      {sale.shop && ` · sold as ${sale.shop.name}`}
-                      {sale.order?.createdAt &&
-                        ` · ${new Date(sale.order.createdAt).toLocaleDateString('es-CO')}`}
+                      {t('Purchases.OrderNumber', { id: sale.orderId })}
+                      {sale.shop && <> · {t('Sales.SoldAs', { shop: sale.shop.name })}</>}
+                      {sale.order?.createdAt && <> · {formatDate(sale.order.createdAt, language)}</>}
                     </p>
                   </div>
 
@@ -165,7 +171,9 @@ const Sales = () => {
 
                 {sale.status === 'cancelled' && (
                   <p className="mt-4 rounded-pz-sm border-l-[3px] border-line-strong bg-sunk px-4 py-3 text-sm leading-relaxed text-muted">
-                    Cancelled by {sale.cancelledBy === 'seller' ? 'you' : 'the buyer'}.
+                    {t('Purchases.CancelledByText', {
+                      who: t(sale.cancelledBy === 'seller' ? 'Purchases.CancelledBy.You' : 'Sales.CancelledBy.Buyer'),
+                    })}
                     {sale.cancelReason && <span className="text-ink"> {sale.cancelReason}</span>}
                   </p>
                 )}
@@ -178,15 +186,15 @@ const Sales = () => {
                   <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
                     {sale.status === 'pending' && (
                       <Button.Action size="sm" loading={working}
-                        onClick={() => run(sale, 'confirm', 'Confirmed. Arrange the handover with the buyer.')}>
-                        Confirm
+                        onClick={() => run(sale, 'confirm', t('Sales.ConfirmedNotify'))}>
+                        {t('Sales.Confirm')}
                       </Button.Action>
                     )}
 
                     {sale.status === 'confirmed' && (
                       <Button.Action size="sm" color="success" loading={working}
-                        onClick={() => run(sale, 'deliver', 'Marked as delivered.')}>
-                        Mark delivered
+                        onClick={() => run(sale, 'deliver', t('Sales.DeliveredNotify'))}>
+                        {t('Sales.MarkDelivered')}
                       </Button.Action>
                     )}
 
@@ -194,7 +202,7 @@ const Sales = () => {
                       variant="ghost" color="danger" size="sm" disabled={working}
                       onClick={() => setCancelling(sale)}
                     >
-                      Cancel
+                      {t('Purchases.CancelAction')}
                     </Button.Action>
                   </div>
                 )}
@@ -206,16 +214,16 @@ const Sales = () => {
 
       <Confirm
         open={Boolean(cancelling)}
-        title="Cancel this order?"
-        body="The buyer is told, and everything in it goes back on sale. Backing out of a confirmed order is the kind of thing buyers remember."
-        confirmLabel="Cancel the order"
+        title={t('Sales.ConfirmCancel.Title')}
+        body={t('Sales.ConfirmCancel.Body')}
+        confirmLabel={t('Sales.ConfirmCancel.Label')}
         loading={busy === cancelling?.id}
         onConfirm={cancel}
         onCancel={() => { setCancelling(null); setReason('') }}
       >
         <Textarea
-          label="Why, if you want to say" optional rows={3}
-          placeholder="Sold it at the market before I saw this."
+          label={t('Purchases.Reason.Label')} optional rows={3}
+          placeholder={t('Sales.Reason.Placeholder')}
           value={reason}
           onChange={event => setReason(event.target.value)}
         />

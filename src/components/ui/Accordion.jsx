@@ -1,6 +1,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
+import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
 
 /**
@@ -16,7 +17,10 @@ import clsx from 'clsx'
  * header has to say which one to look in, because a required field nobody can
  * see is a submit button that appears to do nothing.
  */
-const Accordion = ({ title, summary, defaultOpen = false, problem = false, children }) => (
+const Accordion = ({ title, summary, defaultOpen = false, problem = false, children }) => {
+  const { t } = useTranslation()
+
+  return (
   <Disclosure defaultOpen={defaultOpen}>
     <div
       className={clsx(
@@ -31,7 +35,7 @@ const Accordion = ({ title, summary, defaultOpen = false, problem = false, child
             {problem && (
               <span className="flex items-center gap-1 text-xs font-medium text-alert">
                 <ExclamationCircleIcon className="size-4" />
-                Needs attention
+                {t('Shared.Accordion.NeedsAttention')}
               </span>
             )}
           </span>
@@ -49,6 +53,7 @@ const Accordion = ({ title, summary, defaultOpen = false, problem = false, child
       </DisclosurePanel>
     </div>
   </Disclosure>
-)
+  )
+}
 
 export default Accordion

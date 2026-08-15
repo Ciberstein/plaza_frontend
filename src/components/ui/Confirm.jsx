@@ -1,4 +1,5 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+import { useTranslation } from 'react-i18next'
 import * as Button from './Button'
 
 /**
@@ -15,13 +16,16 @@ const Confirm = ({
   open,
   title,
   body,
-  confirmLabel = 'Delete',
+  confirmLabel,
   confirmColor = 'danger',
   loading = false,
   onConfirm,
   onCancel,
   children,
-}) => (
+}) => {
+  const { t } = useTranslation()
+
+  return (
   <Dialog open={open} onClose={loading ? () => {} : onCancel} className="relative z-100">
     <div className="fixed inset-0 bg-ink/40 backdrop-blur-[2px]" aria-hidden />
 
@@ -42,15 +46,16 @@ const Confirm = ({
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">
           <Button.Action variant="ghost" onClick={onCancel} disabled={loading}>
-            Cancel
+            {t('Shared.Confirm.Cancel')}
           </Button.Action>
           <Button.Action color={confirmColor} onClick={onConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel ?? t('Shared.Confirm.DefaultConfirm')}
           </Button.Action>
         </div>
       </DialogPanel>
     </div>
   </Dialog>
-)
+  )
+}
 
 export default Confirm
