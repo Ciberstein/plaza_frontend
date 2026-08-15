@@ -137,7 +137,6 @@ const Filters = ({ params, set, clear, active }) => {
         <Combobox
           multiple
           label={t('Properties.Filters.Type')}
-          hint={t('Properties.Filters.TypeHint')}
           options={types}
           value={many('category')}
           onChange={values => setMany('category', values)}
