@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapPinIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, ShopLogo } from '../../ui'
+import Questions from '../../shared/Questions'
 import { useAuth } from '../../../context/auth'
 import { useCart } from '../../../context/cart'
 import { useMeta } from '../../../context/meta'
@@ -376,6 +377,10 @@ const Product = () => {
           </div>
         </section>
       )}
+
+      {/* After the description, because a question is what you ask once the
+          description has not answered it. */}
+      <Questions product={product} />
     </div>
   )
 }

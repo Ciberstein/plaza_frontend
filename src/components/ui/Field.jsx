@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 import { errorClass, hintClass, labelClass } from './styles'
 
 /**
@@ -8,23 +9,27 @@ import { errorClass, hintClass, labelClass } from './styles'
  * text under one field makes the form jump as the user types, and once a field
  * is wrong the hint is no longer the thing they need to read.
  */
-const Field = ({ label, htmlFor, optional, hint, error, className, children }) => (
-  <div className={clsx('flex flex-col gap-1.5', className)}>
-    {label && (
-      <label htmlFor={htmlFor} className={labelClass}>
-        {label}
-        {optional && <span className="text-xs font-normal text-muted">optional</span>}
-      </label>
-    )}
+const Field = ({ label, htmlFor, optional, hint, error, className, children }) => {
+  const { t } = useTranslation()
 
-    {children}
+  return (
+    <div className={clsx('flex flex-col gap-1.5', className)}>
+      {label && (
+        <label htmlFor={htmlFor} className={labelClass}>
+          {label}
+          {optional && <span className="text-xs font-normal text-muted">{t('Common.Optional')}</span>}
+        </label>
+      )}
 
-    {error ? (
-      <p className={errorClass}>{error}</p>
-    ) : hint ? (
-      <p className={hintClass}>{hint}</p>
-    ) : null}
-  </div>
-)
+      {children}
+
+      {error ? (
+        <p className={errorClass}>{error}</p>
+      ) : hint ? (
+        <p className={hintClass}>{hint}</p>
+      ) : null}
+    </div>
+  )
+}
 
 export default Field

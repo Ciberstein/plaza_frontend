@@ -198,6 +198,9 @@ const Account = () => {
           <Link to="/sales" className={option}>{t('Header.Account.YourSales')}</Link>
         </MenuItem>
         <MenuItem>
+          <Link to="/questions" className={option}>{t('Header.Account.Questions')}</Link>
+        </MenuItem>
+        <MenuItem>
           <Link to="/listings" className={option}>{t('Header.Account.YourListings')}</Link>
         </MenuItem>
         <MenuItem>

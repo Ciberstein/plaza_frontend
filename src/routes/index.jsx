@@ -13,6 +13,7 @@ import Sell from '../components/pages/Sell'
 import ShopRequest from '../components/pages/Sell/ShopRequest'
 import Product from '../components/pages/Product'
 import Purchases from '../components/pages/Purchases'
+import Questions from '../components/pages/Questions'
 import Sales from '../components/pages/Sales'
 import Shop from '../components/pages/Shop'
 import Shops from '../components/pages/Shops'
@@ -39,6 +40,9 @@ const router = createBrowserRouter([
       { path: '/saved', element: <Protected><Favourites /></Protected> },
       { path: '/purchases', element: <Protected><Purchases /></Protected> },
       { path: '/sales', element: <Protected><Sales /></Protected> },
+      // What buyers asked about this seller's listings. Reading a question is
+      // public; this is the side of it that is only theirs to answer.
+      { path: '/questions', element: <Protected><Questions /></Protected> },
       { path: '/dashboard', element: <Protected><Dashboard /></Protected> },
       { path: '/listings', element: <Protected><Listings /></Protected> },
       // One component for both: creating saves first and lands on the edit

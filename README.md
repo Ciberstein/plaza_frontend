@@ -70,6 +70,7 @@ src/
 /saved                                             (session)
 /purchases        what you bought, one card per seller   (session)
 /sales            what you were asked to sell      (session)
+/questions        what buyers asked you, waiting first    (session)
 /listings         your own catalogue               (session)
 /listings/new     and /listings/:id, the same editor    (session)
 /dashboard        your shops                       (session)
@@ -143,6 +144,28 @@ None of them is a constant in this repo, so none of them can drift.
 a count; the lines are the cart page's business. Favourites hold a Set of ids,
 because the question every card asks is "is this one mine" and it asks it
 forty-eight times a page.
+
+---
+
+### Questions on a listing
+
+The listing page carries a count, not the questions. Quoting one onto the page
+gives a single shopper's concern the same weight as the description; what the
+section says instead is how many were asked and how many were answered, which
+is what a buyer wants to know before bothering to type — a seller who answered
+nine of nine is worth asking, and one who answered none of six has told you
+something too. The questions themselves open in a dialog.
+
+A question and its answer are one block, and whether it was answered is read
+from the shape before any of the words: an answer hangs off its question on a
+short accent rule, and an unanswered one has no rule but an `info` chip, which
+is the colour that means "waiting" everywhere else on the site. Nobody is named
+above a question — they are anonymous by design rather than by omission, so
+nothing leaves a gap where an avatar would go.
+
+`QuestionThread` and `AnswerForm` in `components/shared/Questions.jsx` are
+shared with `/questions`, so the seller answers the same control in the dialog
+on their own listing and in their inbox.
 
 ---
 
