@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, ShopLogo, Textarea } from '../../ui'
 import Contact from '../../shared/Contact'
+import RatingForm from '../../shared/RatingForm'
+import ratings from '../../../services/ratings.services'
 import { useLanguage } from '../../../context/language'
 import { formatDate } from '../../../utils/date'
 import { formatMoney } from '../../../utils/money'
@@ -57,8 +59,27 @@ const Purchases = () => {
 
   const [list, setList] = useState(null)
   const [cancelling, setCancelling] = useState(null)
+  const [receiving, setReceiving] = useState(null)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // Which of these have already been rated. Held apart from the orders
+  // themselves because it answers a question about this reader, not about the
+  // order: two people looking at the same purchase see different buttons.
+  const [said, setSaid] = useState({ ratedParts: [], reviewed: [] })
+  // Which card is currently showing a form, so only one is open at a time.
+  const [rating, setRating] = useState(null)
+
+  useEffect(() => {
+    let ignore = false
+    ratings
+      .mine()
+      .then(mine => { if (!ignore) setSaid(mine) })
+      // An empty answer is the right fallback: the worst case is offering a
+      // button that the server then refuses, which it says plainly.
+      .catch(() => {})
+    return () => { ignore = true }
+  }, [])
 
   const rows = list ?? data ?? []
 
@@ -74,6 +95,20 @@ const Purchases = () => {
       notify(t('Purchases.Cancelled'), 'success')
       setCancelling(null)
       setReason('')
+    } catch {
+      // Reported by the interceptor.
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const received = async () => {
+    setBusy(true)
+    try {
+      const updated = await orders.markReceived(receiving.orderId, receiving.part.id)
+      setList(rows.map(order => (order.id === updated.id ? updated : order)))
+      notify(t('Purchases.MarkReceivedNotify'), 'success')
+      setReceiving(null)
     } catch {
       // Reported by the interceptor.
     } finally {
@@ -149,19 +184,63 @@ const Purchases = () => {
                             {t('Purchases.CancelAction')}
                           </Button.Action>
                         )}
+
+                        {/* The buyer's own way to close it. Without this the
+                            seller decided whether they could ever be rated. */}
+                        {part.status === 'confirmed' && (
+                          <Button.Action
+                            variant="outline" color="neutral" size="sm"
+                            onClick={() => setReceiving({ orderId: order.id, part })}
+                          >
+                            {t('Purchases.MarkReceived')}
+                          </Button.Action>
+                        )}
+
+                        {part.status === 'delivered' && (
+                          said.ratedParts.includes(part.id) ? (
+                            <span className="text-sm text-faint">{t('Ratings.Rate.Done')}</span>
+                          ) : (
+                            <Button.Action
+                              variant="outline" size="sm"
+                              onClick={() => setRating({ target: 'seller', partId: part.id })}
+                            >
+                              {t('Ratings.Rate.Seller')}
+                            </Button.Action>
+                          )
+                        )}
                       </div>
 
                       <ul className="mt-4 flex flex-col gap-1.5 border-t border-line pt-4">
                         {part.items?.map(item => (
-                          <li key={item.id} className="tabular flex justify-between gap-4 text-sm">
+                          <li key={item.id} className="tabular flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
                             <span className="min-w-0 text-ink">
                               {item.quantity > 1 && (
                                 <span className="text-muted">{item.quantity} × </span>
                               )}
                               {item.title}
                             </span>
-                            <span className="shrink-0 text-muted">
-                              {formatMoney(Number(item.unitPrice) * item.quantity, order.currency)}
+
+                            <span className="flex items-baseline gap-3">
+                              {/* Per line, because a review is about the thing
+                                  and an order can hold four different ones.
+                                  Only where the listing still exists: a review
+                                  needs a page to sit on. */}
+                              {part.status === 'delivered' && item.productId && (
+                                said.reviewed.includes(item.productId) ? (
+                                  <span className="text-xs text-faint">{t('Ratings.Rate.Reviewed')}</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setRating({ target: 'product', productId: item.productId })}
+                                    className="cursor-pointer text-xs font-medium text-link hover:underline"
+                                  >
+                                    {t('Ratings.Rate.Product')}
+                                  </button>
+                                )
+                              )}
+                              <span className="shrink-0 text-muted">
+                                {formatMoney(Number(item.unitPrice) * item.quantity, order.currency)}
+                              </span>
                             </span>
                           </li>
                         ))}
@@ -187,6 +266,32 @@ const Purchases = () => {
                         </p>
                       )}
 
+                      {/* Opened under the card it belongs to rather than in a
+                          dialog: the thing being judged should stay on screen
+                          while somebody decides what they thought of it. */}
+                      {rating && (
+                        (rating.target === 'seller' && rating.partId === part.id) ||
+                        (rating.target === 'product' &&
+                          part.items?.some(i => i.productId === rating.productId))
+                      ) && (
+                        <div className="mt-4">
+                          <RatingForm
+                            target={rating.target}
+                            subOrderId={rating.partId}
+                            productId={rating.productId}
+                            onCancel={() => setRating(null)}
+                            onDone={() => {
+                              setSaid(current =>
+                                rating.target === 'seller'
+                                  ? { ...current, ratedParts: [...current.ratedParts, rating.partId] }
+                                  : { ...current, reviewed: [...current.reviewed, rating.productId] },
+                              )
+                              setRating(null)
+                            }}
+                          />
+                        </div>
+                      )}
+
                       {status.note && (
                         <p className="mt-3 text-sm leading-relaxed text-muted">{status.note}</p>
                       )}
@@ -198,6 +303,17 @@ const Purchases = () => {
           ))}
         </ul>
       )}
+
+      <Confirm
+        open={Boolean(receiving)}
+        title={t('Purchases.ConfirmReceived.Title')}
+        body={t('Purchases.ConfirmReceived.Body')}
+        confirmLabel={t('Purchases.ConfirmReceived.Label')}
+        confirmColor="primary"
+        loading={busy}
+        onConfirm={received}
+        onCancel={() => setReceiving(null)}
+      />
 
       <Confirm
         open={Boolean(cancelling)}

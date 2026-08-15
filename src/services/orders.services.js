@@ -17,6 +17,13 @@ const orders = {
       .post(`${API_ROUTES.USER}/orders/${id}/parts/${subOrderId}/cancel`, { reason })
       .then(r => r.data),
 
+  // The buyer's own way to close a part. Until this existed only the seller
+  // could, which made them the keeper of the door that ratings open behind.
+  markReceived: (id, subOrderId) =>
+    api
+      .post(`${API_ROUTES.USER}/orders/${id}/parts/${subOrderId}/received`)
+      .then(r => r.data),
+
   // What I have been asked to sell. Addressed by suborder, which is the unit
   // a seller actually deals with.
   sales: () => api.get(`${API_ROUTES.USER}/sales`).then(r => r.data),

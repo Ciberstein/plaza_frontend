@@ -148,6 +148,43 @@ forty-eight times a page.
 
 ---
 
+### Stars
+
+`ui/Stars.jsx` is `Score` for a rating already left, `Picker` for one being
+chosen, and `Stars` for a plain row inside something else. All three are
+Material UI's `Rating` wearing Plaza's icons and colours.
+
+MUI is here for two things, and neither of them is the look. The control
+underneath is a radio group with real text labels, so a person hearing the page
+gets one control with five options and arrow keys that work, rather than five
+buttons they have to infer an order from — a hand-rolled version was the first
+attempt and got that far, but keeping it right afterwards is what a library is
+actually for. And `precision` fills a star part-way, so an average of 4.3 draws
+as 4.3 rather than rounding to four and throwing away the difference between a
+4.3 seller and a 3.8 one.
+
+It costs about **31 kB gzipped** — `@mui/material` plus `@emotion`, measured
+before and after rather than guessed at. Everything visible is overridden:
+`icon` and `emptyIcon` are the same Heroicons the rest of the app draws with,
+sized by the same Tailwind scale, so nothing inherits Material's typography,
+ripple or palette. If more MUI ever creeps in, that is worth arguing about
+separately — this is one control, not a component library.
+
+`getLabelText` has to be passed on **every** Rating, read-only ones included.
+MUI puts `role="img"` with its own aria-label on the root and its default says
+"4.3 Stars" in English whatever language the page is in, so a wrapper carrying
+a second Spanish label meant a screen reader announced both. `scripts/smoke-stars.mjs`
+renders the control and asserts against the markup; it is what found that.
+
+Stars are drawn in the marigold that elsewhere means "waiting on you" — the one
+place the four-colours-four-jobs rule bends, because a star is gold everywhere
+anyone has seen one and a blue one reads as a bug. The shape keeps them apart:
+"waiting" is always a filled chip with ink on it, a star is always a glyph on
+the page's own ground.
+
+Ratings appear only once somebody has left one. Five empty stars on a new
+listing read as a bad score rather than as no score.
+
 ### Questions on a listing
 
 The listing page carries a count, not the questions. Quoting one onto the page
@@ -232,7 +269,11 @@ Spanish format to an English reader was a plain oversight, not a choice.
 
 ## Known gaps
 
-- **No tests.** Verification is `npm run build`, `npm run lint`, and walking it.
+- **Almost no tests.** Verification is `npm run build`, `npm run lint`, and
+  walking it. The one exception is `scripts/smoke-stars.mjs`, which renders the
+  star control and reads the markup back — it exists because a build only
+  proves the imports resolve, and it earned its place by finding a duplicated
+  English aria-label the day it was written.
 - **No shop editing screen.** The API can upload and remove a shop logo; nothing
   in here calls it, because the only shop form is the one that requests one.
 - **Nothing is paid through Plaza.** The cart and orders exist; there is no

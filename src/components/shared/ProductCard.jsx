@@ -6,6 +6,7 @@ import { HeartIcon as HeartOutline, PhotoIcon } from '@heroicons/react/24/outlin
 import clsx from 'clsx'
 import { useAuth } from '../../context/auth'
 import { useFavourites } from '../../context/favourites'
+import { Score } from '../ui/Stars'
 import { formatRate } from '../../utils/vocabulary'
 
 // The database value, mapped to the translation key that says it in the
@@ -194,6 +195,19 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
         </span>
 
         <span className="line-clamp-2 text-sm leading-snug text-ink">{product.title}</span>
+
+        {/* Only once somebody has rated it. Five empty stars on every new
+            listing would read as a bad score rather than as no score, and a
+            grid of them would say nothing while taking up a line each. */}
+        {product.rating?.count > 0 && (
+          <Score
+            average={product.rating.average}
+            count={product.rating.count}
+            size="sm"
+            showCount={false}
+            className="pt-0.5"
+          />
+        )}
 
         <span className="mt-auto pt-1.5 text-xs text-faint">
           {[seller, condition].filter(Boolean).join(' · ')}

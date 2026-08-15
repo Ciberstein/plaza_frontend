@@ -14,4 +14,7 @@ export { default as Input } from './Input'
 export { default as Price } from './Price'
 export { default as Select } from './Select'
 export { default as ShopLogo } from './ShopLogo'
+// Named alongside the default, so a caller writes Score for a rating already
+// left and Picker for one being chosen.
+export { default as Stars, Score, Picker } from './Stars'
 export { default as Textarea } from './Textarea'

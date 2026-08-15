@@ -4,7 +4,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapPinIcon, PhotoIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 import { Avatar, Button, Confirm, ShopLogo } from '../../ui'
+import { Score } from '../../ui/Stars'
 import Questions from '../../shared/Questions'
+import Reviews from '../../shared/Reviews'
 import { useAuth } from '../../../context/auth'
 import { useCart } from '../../../context/cart'
 import { useMeta } from '../../../context/meta'
@@ -100,7 +102,16 @@ const Seller = ({ product }) => {
       <Avatar account={product.seller} size="sm" />
       <span className="min-w-0">
         <span className="block truncate font-medium text-ink">{product.seller?.username}</span>
-        <span className="block text-xs text-muted">{t('Product.Seller.SoldDirectly')}</span>
+        {product.seller?.rating?.count > 0 ? (
+          <Score
+            average={product.seller.rating.average}
+            count={product.seller.rating.count}
+            size="sm"
+            className="mt-0.5"
+          />
+        ) : (
+          <span className="block text-xs text-muted">{t('Ratings.Seller.New')}</span>
+        )}
       </span>
     </div>
   )
@@ -359,6 +370,17 @@ const Product = () => {
                   : t('Product.Stock.NoneLeft')}
               </p>
             )}
+
+            {/* Beside the price, because it is the other half of what somebody
+                is weighing up. Absent until anybody has rated it: five empty
+                stars read as a bad score rather than as no score. */}
+            {product.rating?.count > 0 && (
+              <Score
+                average={product.rating.average}
+                count={product.rating.count}
+                className="mt-3"
+              />
+            )}
           </div>
 
           <Buy product={product} />
@@ -401,8 +423,11 @@ const Product = () => {
         </section>
       )}
 
-      {/* After the description, because a question is what you ask once the
-          description has not answered it. */}
+      {/* Evidence first, then questions: a review is what somebody who
+          already bought it will tell you, and a question is what you ask when
+          neither the description nor the reviews answered it. */}
+      <Reviews product={product} />
+
       <Questions product={product} />
     </div>
   )
