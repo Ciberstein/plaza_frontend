@@ -39,7 +39,7 @@ const Skeleton = () => (
  * who arrived to buy something is asking them to do the work of finding the
  * goods themselves. The shops moved to /shops, where you go on purpose.
  */
-const Home = () => {
+const Home = ({ kind = 'good' }) => {
   const { t } = useTranslation()
   const { category } = useParams()
   const [params] = useSearchParams()
@@ -48,18 +48,28 @@ const Home = () => {
   const { categories: rawCategories } = useMeta()
   const categories = withCategoryLabels(language, rawCategories)
 
-  // The key carries both, so switching category while a search is open refetches
-  // rather than showing the last answer under the new heading.
-  const load = useCallback(() => products.browse({ q, category }), [q, category])
-  const { data, loading } = useResource(load, `${category ?? ''}|${q ?? ''}`)
+  // A category slug is unique across both trees, so the aisle a filtered page
+  // belongs to is a fact about the category rather than something the route has
+  // to repeat. Unfiltered, it is whatever the route said.
+  const open = categories.find(c => c.slug === category)
+  const aisle = open?.kind ?? kind
+  const isService = aisle === 'service'
+
+  // The key carries all three, so switching aisle or category while a search is
+  // open refetches rather than showing the last answer under the new heading.
+  const load = useCallback(
+    () => products.browse({ q, category, kind: aisle }),
+    [q, category, aisle],
+  )
+  const { data, loading } = useResource(load, `${aisle}|${category ?? ''}|${q ?? ''}`)
   const list = data ?? []
 
   const filtered = Boolean(category || q)
-  const categoryLabel = categories.find(c => c.slug === category)?.label
+  const categoryLabel = open?.label
 
   const heading = q
     ? t('Home.ResultsFor', { query: q })
-    : categoryLabel ?? category ?? t('Home.EverythingForSale')
+    : categoryLabel ?? category ?? (isService ? t('Services.Title') : t('Home.EverythingForSale'))
 
   return (
     <div className="shell py-8 sm:py-10">
@@ -70,7 +80,7 @@ const Home = () => {
 
         {filtered && (
           <Link
-            to="/"
+            to={isService ? '/servicios' : '/'}
             className="flex items-center gap-1.5 rounded-pz-sm border border-line-strong px-3 py-1.5 text-[13px] font-medium text-muted transition-colors hover:border-ink hover:text-ink"
           >
             <XMarkIcon className="size-4" />
@@ -84,16 +94,24 @@ const Home = () => {
       ) : list.length === 0 ? (
         <div className="panel flex flex-col items-center gap-4 px-6 py-16 text-center">
           <h2 className="font-display text-xl font-semibold text-ink">
-            {q ? t('Home.NothingUnderName') : t('Home.EmptyAisle')}
+            {q
+              ? t('Home.NothingUnderName')
+              : isService && !category
+                ? t('Services.Empty.Title')
+                : t('Home.EmptyAisle')}
           </h2>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
             {q
               ? t('Common.NoMatch', { query: q })
               : category
                 ? t('Home.EmptyAisleWithCategory')
-                : t('Home.EmptyAisleGeneral')}
+                : isService
+                  ? t('Services.Empty.Body')
+                  : t('Home.EmptyAisleGeneral')}
           </p>
-          <Button.Action as={Link} to="/sell" size="sm" className="mt-1">{t('Common.SellOnPlaza')}</Button.Action>
+          <Button.Action as={Link} to="/sell" size="sm" className="mt-1">
+            {isService ? t('Services.Offer') : t('Common.SellOnPlaza')}
+          </Button.Action>
         </div>
       ) : (
         <div className={GRID}>

@@ -60,19 +60,28 @@ const Search = () => {
   const { t } = useTranslation()
   const { language } = useLanguage()
   const { categories: rawCategories } = useMeta()
-  const categories = withCategoryLabels(language, rawCategories)
+  const all = withCategoryLabels(language, rawCategories)
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
   // The open category comes from the URL rather than from state, so the picker
   // still shows the right thing after a reload or a back button.
   const match = useMatch('/c/:category')
+  const onServices = useMatch('/servicios')
   const slug = match?.params.category ?? null
   const q = params.get('q')?.trim() ?? ''
 
+  // Which aisle this search is in. A category slug is unique across both
+  // trees, so an open category answers it; otherwise the route does. The
+  // picker then offers that tree alone — twenty-six parents in one list, half
+  // of which cannot hold what you are looking at, is not a picker.
+  const aisle = all.find(c => c.slug === slug)?.kind ?? (onServices ? 'service' : 'good')
+  const categories = all.filter(c => c.kind === aisle)
+  const root = aisle === 'service' ? '/servicios' : '/'
+
   const go = (nextSlug, query) => {
     const search = query ? `?q=${encodeURIComponent(query)}` : ''
-    navigate(nextSlug ? `/c/${nextSlug}${search}` : `/${search}`)
+    navigate(nextSlug ? `/c/${nextSlug}${search}` : `${root}${search}`)
   }
 
   const submit = (event) => {
@@ -315,6 +324,18 @@ const Header = () => {
           a category and not an account setting. */}
       <nav aria-label={t('Header.Nav.Sections')} className="bg-accent-deep">
         <ul className="shell flex items-center gap-1 overflow-x-auto py-1.5 scrollbar-none [&::-webkit-scrollbar]:hidden">
+          {/* The two aisles, first and beside each other. Somebody looking for
+              a plumber and somebody looking for headphones want different
+              halves of the site, and neither should have to find out that the
+              other half exists by searching for it. `end` on the first, or
+              every route would light it up. */}
+          <li>
+            <NavLink to="/" end className={secondary}>{t('Common.Products')}</NavLink>
+          </li>
+          <li>
+            <NavLink to="/servicios" className={secondary}>{t('Common.Services')}</NavLink>
+          </li>
+          <li aria-hidden className="mx-1 h-4 w-px shrink-0 bg-white/25" />
           <li>
             <NavLink to="/shops" className={secondary}>{t('Header.Nav.Shops')}</NavLink>
           </li>

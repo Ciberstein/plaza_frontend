@@ -10,10 +10,9 @@ import { useCart } from '../../../context/cart'
 import { useMeta } from '../../../context/meta'
 import { notify } from '../../../utils/notify'
 import orders from '../../../services/orders.services'
-import { formatMoney } from '../../../utils/money'
 import products from '../../../services/products.services'
 import { useResource } from '../../../hooks/useResource'
-import { withDeliveryLabels } from '../../../utils/vocabulary'
+import { formatRate, withHandoverLabels } from '../../../utils/vocabulary'
 
 // The database value, mapped to the translation key that says it in the
 // shopper's words. "like_new" is what the column holds; nobody reads that.
@@ -181,14 +180,17 @@ const Buy = ({ product }) => {
   // is checked before the sign-in branch and so won the screen.
   const mine = Boolean(account?.id) && account.id === product.seller?.id
   const paused = product.status === 'paused'
-  const gone = product.stock < 1
+  const isService = product.kind === 'service'
+  // Somebody's time never runs out on a shelf. A service is available until
+  // its provider says otherwise, which is what pausing is for.
+  const gone = !isService && product.stock < 1
 
   if (!ready) return <div className="h-11" aria-hidden />
 
   if (mine) {
     return (
       <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
-        {t('Product.Buy.YourListing')}
+        {isService ? t('Product.Service.YourListing') : t('Product.Buy.YourListing')}
       </p>
     )
   }
@@ -200,7 +202,9 @@ const Buy = ({ product }) => {
     return (
       <p className="rounded-pz border border-line border-l-[3px] border-l-info bg-sunk px-4 py-3 text-sm text-ink">
         <span className="font-medium">{t('Product.Buy.PausedTitle')}</span>{' '}
-        <span className="text-muted">{t('Product.Buy.PausedBody')}</span>
+        <span className="text-muted">
+          {isService ? t('Product.Service.Paused') : t('Product.Buy.PausedBody')}
+        </span>
       </p>
     )
   }
@@ -223,7 +227,7 @@ const Buy = ({ product }) => {
         size="lg"
         full
       >
-        {t('Product.Buy.SignInToBuy')}
+        {isService ? t('Product.Service.SignInToRequest') : t('Product.Buy.SignInToBuy')}
       </Button.Action>
     )
   }
@@ -233,7 +237,7 @@ const Buy = ({ product }) => {
     setBusy(true)
     try {
       const order = await orders.place([{ productId: product.id, quantity: 1 }])
-      notify(t('Product.Buy.Placed'), 'success')
+      notify(isService ? t('Product.Service.Requested') : t('Product.Buy.Placed'), 'success')
       navigate(`/purchases#order-${order.id}`)
     } catch {
       // Reported by the interceptor, which names what ran out.
@@ -245,7 +249,7 @@ const Buy = ({ product }) => {
   return (
     <div className="flex flex-col gap-3">
       <Button.Action size="lg" full loading={busy} onClick={() => setAsking(true)}>
-        {t('Product.Buy.Now')}
+        {isService ? t('Product.Service.Request') : t('Product.Buy.Now')}
       </Button.Action>
 
       {/* Asked before the order, not explained after it. What changes at the
@@ -253,23 +257,28 @@ const Buy = ({ product }) => {
           their own, and by then it is too late to matter. */}
       <Confirm
         open={asking}
-        title={t('Product.Buy.ConfirmTitle')}
-        body={t('Product.Buy.ConfirmBody')}
-        confirmLabel={t('Product.Buy.ConfirmLabel')}
+        title={isService ? t('Product.Service.ConfirmTitle') : t('Product.Buy.ConfirmTitle')}
+        body={isService ? t('Product.Service.ConfirmBody') : t('Product.Buy.ConfirmBody')}
+        confirmLabel={isService ? t('Product.Service.ConfirmLabel') : t('Product.Buy.ConfirmLabel')}
         confirmColor="primary"
         loading={busy}
         onConfirm={buyNow}
         onCancel={() => setAsking(false)}
       />
 
-      <Button.Action
-        variant="soft" size="lg" full disabled={busy}
-        // The context reports the outcome, success or refusal. Saying so here
-        // too would announce a success the request had not had yet.
-        onClick={() => add(product.id)}
-      >
-        {t('Product.Buy.AddToCart')}
-      </Button.Action>
+      {/* No basket for a service. A basket is for things that get packed
+          together and carried away; this is an arrangement with one person
+          about their time. */}
+      {!isService && (
+        <Button.Action
+          variant="soft" size="lg" full disabled={busy}
+          // The context reports the outcome, success or refusal. Saying so here
+          // too would announce a success the request had not had yet.
+          onClick={() => add(product.id)}
+        >
+          {t('Product.Buy.AddToCart')}
+        </Button.Action>
+      )}
     </div>
   )
 }
@@ -277,7 +286,7 @@ const Buy = ({ product }) => {
 const Product = () => {
   const { t } = useTranslation()
   const { id } = useParams()
-  const { cities, delivery: rawDelivery } = useMeta()
+  const { cities, delivery: rawDelivery, serviceDelivery: rawServiceDelivery } = useMeta()
 
   const load = useCallback(() => products.read(id), [id])
   const { data: product, error, loading } = useResource(load, id)
@@ -312,7 +321,14 @@ const Product = () => {
   }
 
   const city = cities.find(c => c.value === product.cityId)
-  const ways = withDeliveryLabels(t, rawDelivery.filter(option => product.delivery?.includes(option.value)))
+  const isService = product.kind === 'service'
+
+  const ways = withHandoverLabels(
+    t,
+    product.kind,
+    (isService ? rawServiceDelivery : rawDelivery)
+      .filter(option => product.delivery?.includes(option.value)),
+  )
 
   return (
     <div className="shell py-8 sm:py-10">
@@ -321,7 +337,7 @@ const Product = () => {
 
         <div className="flex flex-col gap-6">
           <div>
-            {product.condition && (
+            {product.condition && !isService && (
               <span className="text-sm text-muted">{t(`Product.Condition.${CONDITION_KEY[product.condition]}`)}</span>
             )}
 
@@ -329,15 +345,20 @@ const Product = () => {
               {product.title}
             </h1>
 
+            {/* A rate carries its unit, because "$45.000" is unreadable when
+                it could mean an hour or a week. */}
             <p className="tabular mt-4 font-display text-4xl leading-none font-semibold text-ink">
-              {formatMoney(product.price, product.currency)}
+              {formatRate(t, product)}
             </p>
 
-            <p className="mt-2 text-sm text-muted">
-              {product.stock > 0
-                ? t('Product.Stock.Available', { count: product.stock })
-                : t('Product.Stock.NoneLeft')}
-            </p>
+            {/* Nothing is on a shelf, so nothing is said about one. */}
+            {!isService && (
+              <p className="mt-2 text-sm text-muted">
+                {product.stock > 0
+                  ? t('Product.Stock.Available', { count: product.stock })
+                  : t('Product.Stock.NoneLeft')}
+              </p>
+            )}
           </div>
 
           <Buy product={product} />
@@ -346,7 +367,9 @@ const Product = () => {
 
           {ways.length > 0 && (
             <section>
-              <h2 className="font-display text-base font-semibold text-ink">{t('Product.DeliveryOptionsTitle')}</h2>
+              <h2 className="font-display text-base font-semibold text-ink">
+                {isService ? t('Product.Service.WhereTitle') : t('Product.DeliveryOptionsTitle')}
+              </h2>
               <ul className="mt-3 flex flex-col gap-2">
                 {ways.map(way => (
                   <li key={way.value} className="text-sm text-ink">

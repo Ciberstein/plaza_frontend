@@ -23,6 +23,10 @@ const router = createBrowserRouter([
     element: <Public />,
     children: [
       { path: '/', element: <Home /> },
+      // The other aisle. A category slug is unique across both trees, so
+      // /c/:category serves either and works out which from the category
+      // itself rather than needing a second filtered route.
+      { path: '/servicios', element: <Home kind="service" /> },
       { path: '/c/:category', element: <Home /> },
       { path: '/p/:id', element: <Product /> },
       // The directory the home page used to be. Reached on purpose now.

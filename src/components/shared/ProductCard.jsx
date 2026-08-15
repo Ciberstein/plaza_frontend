@@ -6,7 +6,7 @@ import { HeartIcon as HeartOutline, PhotoIcon } from '@heroicons/react/24/outlin
 import clsx from 'clsx'
 import { useAuth } from '../../context/auth'
 import { useFavourites } from '../../context/favourites'
-import { formatMoney } from '../../utils/money'
+import { formatRate } from '../../utils/vocabulary'
 
 // The database value, mapped to the translation key that says it in the
 // shopper's words. "like_new" is what the column holds; nobody reads that.
@@ -49,6 +49,8 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
       : []
 
   const seller = product.shop?.name ?? product.seller?.username
+  // A service has no condition — there is no second-hand hour — so the line
+  // under the title carries only who is offering it.
   const condition = product.condition
     ? t(`Shared.ProductCard.Condition.${CONDITION_KEY[product.condition]}`)
     : null
@@ -188,7 +190,7 @@ const ProductCard = ({ product, index = 0, state = 'active' }) => {
 
       <span className="flex grow flex-col gap-1 p-3">
         <span className="tabular font-display text-lg leading-none font-semibold text-ink">
-          {formatMoney(product.price, product.currency)}
+          {formatRate(t, product)}
         </span>
 
         <span className="line-clamp-2 text-sm leading-snug text-ink">{product.title}</span>

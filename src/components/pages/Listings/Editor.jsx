@@ -26,7 +26,13 @@ import { useLanguage } from '../../../context/language'
 import { useMeta } from '../../../context/meta'
 import { formatMoney } from '../../../utils/money'
 import { notify } from '../../../utils/notify'
-import { withCategoryLabels, withConditionLabels, withDeliveryLabels } from '../../../utils/vocabulary'
+import {
+  rateUnitShort,
+  withCategoryLabels,
+  withConditionLabels,
+  withHandoverLabels,
+  withRateUnitLabels,
+} from '../../../utils/vocabulary'
 import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
 
@@ -206,7 +212,7 @@ const Photos = ({ tiles, onQueue, onReorder, busy }) => {
 
 const labelOf = (list, value) => list.find(o => o.value === value)?.label
 
-const ItemSummary = ({ control, categories, conditions }) => {
+const ItemSummary = ({ control, categories, conditions, kind }) => {
   const { t } = useTranslation()
   const [title, categoryId, condition] = useWatch({
     control, name: ['title', 'categoryId', 'condition'],
@@ -215,43 +221,68 @@ const ItemSummary = ({ control, categories, conditions }) => {
   return [
     title || t('Editor.Summary.NotNamed'),
     labelOf(categories, categoryId),
-    labelOf(conditions, condition),
+    // A service has no condition, so nothing goes in its place: an empty slot
+    // reads as a field somebody forgot rather than one that does not exist.
+    kind === 'service' ? null : labelOf(conditions, condition),
   ].filter(Boolean).join(' · ')
 }
 
-const PriceSummary = ({ control, published }) => {
+const PriceSummary = ({ control, published, kind }) => {
   const { t } = useTranslation()
-  const [price, stock, availability] = useWatch({
-    control, name: ['price', 'stock', 'availability'],
+  const [price, stock, availability, rateUnit, onRequest] = useWatch({
+    control, name: ['price', 'stock', 'availability', 'rateUnit', 'onRequest'],
   })
 
+  const isService = kind === 'service'
+
+  // Read off the form rather than off a saved listing, so the header keeps up
+  // while the seller is still typing.
+  const money = onRequest
+    ? t('Common.OnRequest')
+    : price
+      ? formatMoney(price)
+      : t('Editor.Summary.NoPrice')
+
+  const unit = isService && !onRequest && rateUnit ? rateUnitShort(t, rateUnit) : null
+
   return [
-    price ? formatMoney(price) : t('Editor.Summary.NoPrice'),
-    t('Listings.InStock', { count: Number(stock) || 0 }),
-    published && (Number(stock) === 0
+    unit ? `${money} / ${unit}` : money,
+    // Nobody keeps four caregivers in reserve, so a service says nothing about
+    // a shelf it does not have.
+    isService ? null : t('Listings.InStock', { count: Number(stock) || 0 }),
+    published && (!isService && Number(stock) === 0
       ? t('Editor.Summary.Unavailable')
       : availability === 'paused' ? t('Listings.Status.Paused.Label') : t('Editor.Summary.Available')),
   ].filter(Boolean).join(' · ')
 }
 
-const DeliverySummary = ({ control, cities }) => {
+const DeliverySummary = ({ control, cities, kind }) => {
   const { t } = useTranslation()
   const [cityId, delivery] = useWatch({ control, name: ['cityId', 'delivery'] })
   const count = delivery?.length ?? 0
+  const isService = kind === 'service'
 
-  return [
-    labelOf(cities, cityId) ?? t('Editor.Summary.NoLocation'),
-    count ? t('Editor.Summary.WaysToHandOver', { count }) : t('Editor.Summary.NoDeliveryChosen'),
-  ].join(' · ')
+  const chosen = isService
+    ? (count ? t('Editor.Summary.WaysToWork', { count }) : t('Editor.Summary.NoWhereChosen'))
+    : (count ? t('Editor.Summary.WaysToHandOver', { count }) : t('Editor.Summary.NoDeliveryChosen'))
+
+  return [labelOf(cities, cityId) ?? t('Editor.Summary.NoLocation'), chosen].join(' · ')
 }
 
-/** The delivery checkboxes. Several at once, at least one. */
-const Delivery = ({ options, value, onChange, error }) => {
+/**
+ * How the two of you meet. Several at once, at least one.
+ *
+ * One control for both kinds, because it is one question — where a parcel goes,
+ * or where the work happens — and only the words in front of it change.
+ */
+const Delivery = ({ options, value, onChange, error, kind }) => {
   const { t } = useTranslation()
 
   return (
     <fieldset className="flex flex-col gap-1.5">
-      <legend className={labelClass}>{t('Editor.Delivery.Legend')}</legend>
+      <legend className={labelClass}>
+        {kind === 'service' ? t('Editor.Where.Legend') : t('Editor.Delivery.Legend')}
+      </legend>
 
       <div className="mt-1.5 flex flex-col gap-3">
         {options.map(option => (
@@ -276,15 +307,67 @@ const Delivery = ({ options, value, onChange, error }) => {
   )
 }
 
+/**
+ * What is being published, asked once and never again.
+ *
+ * Only on the way in. A product does not become a service — the two are priced
+ * differently, filed in different trees and ordered differently — so once a row
+ * exists this reads back as a fact rather than a control. Offering it as an
+ * editable field would be offering a change that rewrites half the row.
+ */
+const Kind = ({ value, onChange }) => {
+  const { t } = useTranslation()
+
+  const options = [
+    { value: 'good', label: t('Editor.Kind.Good.Label'), subtitle: t('Editor.Kind.Good.Subtitle') },
+    { value: 'service', label: t('Editor.Kind.Service.Label'), subtitle: t('Editor.Kind.Service.Subtitle') },
+  ]
+
+  return (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className={labelClass}>{t('Editor.Kind.Legend')}</legend>
+
+      <div className="mt-1.5 grid gap-3 sm:grid-cols-2">
+        {options.map(option => {
+          const picked = value === option.value
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              aria-pressed={picked}
+              className={clsx(
+                'cursor-pointer rounded-pz border p-4 text-left transition-colors',
+                picked
+                  ? 'border-accent bg-accent-tint'
+                  : 'border-line-strong hover:border-ink hover:bg-sunk',
+              )}
+            >
+              <span className={clsx('block text-sm font-semibold', picked ? 'text-link' : 'text-ink')}>
+                {option.label}
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                {option.subtitle}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+}
+
 const Editor = () => {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { language } = useLanguage()
-  const { categories: rawCategories, cities, conditions: rawConditions, delivery: rawDelivery, ready } = useMeta()
-  const categories = useMemo(() => withCategoryLabels(language, rawCategories), [language, rawCategories])
-  const conditions = useMemo(() => withConditionLabels(t, rawConditions), [t, rawConditions])
-  const deliveryOptions = useMemo(() => withDeliveryLabels(t, rawDelivery), [t, rawDelivery])
+  const {
+    categories: rawCategories, cities, conditions: rawConditions,
+    delivery: rawDelivery, serviceDelivery: rawServiceDelivery,
+    rateUnits: rawRateUnits, ready,
+  } = useMeta()
 
   const [product, setProduct] = useState(null)
   // null, not []: "this person has no shops" and "we have not asked yet" are
@@ -310,11 +393,32 @@ const Editor = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
+      kind: 'good',
       title: '', description: '', price: '', stock: 1,
       categoryId: null, cityId: null, shopId: '',
       condition: null, delivery: [], availability: 'active',
+      // Only a service uses these. `onRequest` never reaches the API — it is
+      // the tick that means "send no price at all".
+      rateUnit: null, onRequest: false,
     },
   })
+
+  // Watched rather than read once: picking the kind on the way in changes which
+  // half of this form exists, and the category tree under it.
+  const kind = useWatch({ control, name: 'kind' })
+  const onRequest = useWatch({ control, name: 'onRequest' })
+  const isService = kind === 'service'
+
+  const categories = useMemo(
+    () => withCategoryLabels(language, rawCategories, kind),
+    [language, rawCategories, kind],
+  )
+  const conditions = useMemo(() => withConditionLabels(t, rawConditions), [t, rawConditions])
+  const deliveryOptions = useMemo(
+    () => withHandoverLabels(t, kind, isService ? rawServiceDelivery : rawDelivery),
+    [t, kind, isService, rawServiceDelivery, rawDelivery],
+  )
+  const rateUnits = useMemo(() => withRateUnitLabels(t, rawRateUnits), [t, rawRateUnits])
 
   // The one value the form body itself needs: it decides whether availability
   // can be chosen at all. Everything else the headers report is read by the
@@ -342,6 +446,7 @@ const Editor = () => {
         if (ignore) return
         setProduct(data)
         reset({
+          kind: data.kind ?? 'good',
           title: data.title,
           description: data.description ?? '',
           price: String(data.price ?? ''),
@@ -352,6 +457,10 @@ const Editor = () => {
           condition: data.condition ?? null,
           delivery: data.delivery ?? [],
           availability: data.status === 'paused' ? 'paused' : 'active',
+          rateUnit: data.rateUnit ?? null,
+          // A stored null price is the seller having said "on request", which
+          // is a different thing from an empty field they have not filled in.
+          onRequest: data.kind === 'service' && data.price === null,
         })
       })
       .catch(() => { if (!ignore) navigate('/listings', { replace: true }) })
@@ -412,7 +521,10 @@ const Editor = () => {
     setValue('delivery', SHOP_DEFAULT[shop.shipping] ?? [], { shouldValidate: false })
   }
 
-  const empty = Number(stock) === 0
+  // Only a thing runs out. A stored service carries a stock of zero because
+  // the column has to hold something, and reading it here would grey out the
+  // availability of every service the moment it was opened for editing.
+  const empty = !isService && Number(stock) === 0
   const published = product && ['active', 'paused', 'out_of_stock'].includes(product.status)
 
   const photoSummary = (() => {
@@ -426,7 +538,7 @@ const Editor = () => {
   // of sight is only acceptable if the header says where the problem is.
   const problems = {
     item: Boolean(errors.title || errors.categoryId || errors.condition),
-    price: Boolean(errors.price || errors.stock),
+    price: Boolean(errors.price || errors.stock || errors.rateUnit),
     delivery: Boolean(errors.cityId || errors.delivery),
   }
 
@@ -447,11 +559,33 @@ const Editor = () => {
    * publish what the person is looking at.
    */
   const save = async (values, { publish = false } = {}) => {
+    // `onRequest` is the form's own word for it and means nothing to the API,
+    // which reads a null price as the same statement.
+    const { onRequest: quoted, ...rest } = values
+
     const payload = {
-      ...values,
+      ...rest,
       stock: Number(values.stock),
       shopId: values.shopId === '' ? null : values.shopId,
     }
+
+    if (values.kind === 'service') {
+      // Neither belongs to somebody's time, and sending them is what the API
+      // refuses rather than quietly ignores.
+      delete payload.stock
+      delete payload.condition
+
+      if (quoted) {
+        payload.price = null
+        payload.rateUnit = null
+      }
+    } else {
+      delete payload.rateUnit
+    }
+
+    // The kind is set once, when the row is made. An edit that carried one
+    // would be asking to rewrite what the listing is.
+    if (id) delete payload.kind
 
     // Only meaningful once published, and the API refuses it on a draft.
     if (!published) delete payload.availability
@@ -639,11 +773,41 @@ const Editor = () => {
           <Accordion
             key={`item-${problems.item}`}
             title={t('Editor.Section.Item')}
-            summary={<ItemSummary control={control} categories={categoryOptions} conditions={conditions} />}
+            summary={<ItemSummary control={control} categories={categoryOptions} conditions={conditions} kind={kind} />}
             problem={problems.item}
             defaultOpen
           >
             <div className="flex flex-col gap-6">
+            {/* First, because everything under it depends on the answer: which
+                category tree, which price shape, which questions at all. */}
+            {id ? (
+              <p className="rounded-pz border border-line bg-sunk px-4 py-3 text-sm text-muted">
+                <span className="font-medium text-ink">
+                  {isService ? t('Editor.Kind.Service.Label') : t('Editor.Kind.Good.Label')}
+                </span>
+                {' — '}
+                {t('Editor.Kind.Locked')}
+              </p>
+            ) : (
+              <Controller
+                name="kind" control={control}
+                render={({ field }) => (
+                  <Kind
+                    value={field.value}
+                    onChange={next => {
+                      field.onChange(next)
+                      // The trees do not overlap, so whatever was picked in the
+                      // other one is not a category in this one. Cleared rather
+                      // than left to fail validation with a value the seller
+                      // can no longer see in the list.
+                      setValue('categoryId', null)
+                      setValue('delivery', [])
+                    }}
+                  />
+                )}
+              />
+            )}
+
             <Input
               label={t('Editor.Title.Label')}
               placeholder={t('Editor.Title.Placeholder')}
@@ -670,21 +834,24 @@ const Editor = () => {
               )}
             />
 
-            <Controller
-              name="condition" control={control}
-              rules={{ required: t('Editor.Condition.Required') }}
-              render={({ field }) => (
-                <Select
-                  label={t('Editor.Condition.Label')} options={conditions}
-                  value={field.value} onChange={field.onChange}
-                  // Never preselected. A default here publishes everything
-                  // second-hand as new by whoever did not scroll this far.
-                  placeholder={ready ? t('Common.ChooseOne') : t('Common.Loading')}
-                  disabled={!ready}
-                  error={errors.condition?.message}
-                />
-              )}
-            />
+            {/* There is no second-hand hour. */}
+            {!isService && (
+              <Controller
+                name="condition" control={control}
+                rules={{ required: isService ? false : t('Editor.Condition.Required') }}
+                render={({ field }) => (
+                  <Select
+                    label={t('Editor.Condition.Label')} options={conditions}
+                    value={field.value} onChange={field.onChange}
+                    // Never preselected. A default here publishes everything
+                    // second-hand as new by whoever did not scroll this far.
+                    placeholder={ready ? t('Common.ChooseOne') : t('Common.Loading')}
+                    disabled={!ready}
+                    error={errors.condition?.message}
+                  />
+                )}
+              />
+            )}
 
             {/* Above delivery on purpose: choosing a shop suggests how that
                 shop usually hands things over. */}
@@ -712,29 +879,67 @@ const Editor = () => {
           <Accordion
             key={`price-${problems.price}`}
             title={t('Editor.Section.Price')}
-            summary={<PriceSummary control={control} published={published} />}
+            summary={<PriceSummary control={control} published={published} kind={kind} />}
             problem={problems.price}
           >
             <div className="flex flex-col gap-6">
+            {/* Some work cannot be costed before it is seen. The tick comes
+                first because it decides whether the field below it applies at
+                all, and a disabled field under an unticked box is easier to
+                read than a field that vanishes. */}
+            {isService && (
+              <Controller
+                name="onRequest" control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label={t('Editor.Rate.OnRequest.Label')}
+                    hint={t('Editor.Rate.OnRequest.Hint')}
+                    checked={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            )}
+
             <div className="grid gap-6 sm:grid-cols-2">
               <Input
-                label={t('Editor.Price.Label')} prefix="$" inputMode="decimal" placeholder="180000"
+                label={isService ? t('Editor.Rate.Label') : t('Editor.Price.Label')}
+                prefix="$" inputMode="decimal" placeholder="180000"
+                disabled={isService && onRequest}
                 error={errors.price?.message}
                 {...register('price', {
-                  required: t('Editor.Price.Required'),
-                  pattern: { value: /^\d{1,10}(\.\d{1,2})?$/, message: t('Editor.Price.Pattern') },
+                  required: isService && onRequest ? false : t('Editor.Rate.Required'),
+                  pattern: isService && onRequest
+                    ? undefined
+                    : { value: /^\d{1,10}(\.\d{1,2})?$/, message: t('Editor.Price.Pattern') },
                 })}
               />
 
-              <Input
-                label={t('Editor.Stock.Label')} inputMode="numeric"
-                hint={t('Editor.Stock.Hint')}
-                error={errors.stock?.message}
-                {...register('stock', {
-                  required: t('Editor.Stock.Required'),
-                  min: { value: 0, message: t('Editor.Stock.Min') },
-                })}
-              />
+              {isService ? (
+                <Controller
+                  name="rateUnit" control={control}
+                  rules={{ required: onRequest ? false : t('Editor.Rate.Unit.Required') }}
+                  render={({ field }) => (
+                    <Select
+                      label={t('Editor.Rate.Unit.Label')} options={rateUnits}
+                      value={field.value} onChange={field.onChange}
+                      placeholder={ready ? t('Common.ChooseOne') : t('Common.Loading')}
+                      disabled={!ready || onRequest}
+                      error={errors.rateUnit?.message}
+                    />
+                  )}
+                />
+              ) : (
+                <Input
+                  label={t('Editor.Stock.Label')} inputMode="numeric"
+                  hint={t('Editor.Stock.Hint')}
+                  error={errors.stock?.message}
+                  {...register('stock', {
+                    required: t('Editor.Stock.Required'),
+                    min: { value: 0, message: t('Editor.Stock.Min') },
+                  })}
+                />
+              )}
             </div>
 
             <Controller
@@ -763,8 +968,8 @@ const Editor = () => {
 
           <Accordion
             key={`delivery-${problems.delivery}`}
-            title={t('Editor.Section.Delivery')}
-            summary={<DeliverySummary control={control} cities={cities} />}
+            title={isService ? t('Editor.Section.Service') : t('Editor.Section.Delivery')}
+            summary={<DeliverySummary control={control} cities={cities} kind={kind} />}
             problem={problems.delivery}
           >
             <div className="flex flex-col gap-6">
@@ -785,10 +990,14 @@ const Editor = () => {
 
             <Controller
               name="delivery" control={control}
-              rules={{ validate: v => v.length > 0 || t('Editor.Delivery.Required') }}
+              rules={{
+                validate: v =>
+                  v.length > 0 ||
+                  (isService ? t('Editor.Where.Required') : t('Editor.Delivery.Required')),
+              }}
               render={({ field }) => (
                 <Delivery
-                  options={deliveryOptions} value={field.value}
+                  options={deliveryOptions} value={field.value} kind={kind}
                   onChange={field.onChange} error={errors.delivery?.message}
                 />
               )}

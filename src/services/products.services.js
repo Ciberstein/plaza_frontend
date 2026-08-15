@@ -2,7 +2,8 @@ import api from '../api/axios'
 import { API_ROUTES } from '../api/routes'
 
 const products = {
-  // Public — the square.
+  // Public — the square. `kind` picks the aisle: absent means goods, which is
+  // what every caller meant before services existed.
   browse: (params) => api.get(`${API_ROUTES.PUBLIC}/products`, { params }).then(r => r.data),
   read: (id) => api.get(`${API_ROUTES.PUBLIC}/products/${id}`).then(r => r.data),
 

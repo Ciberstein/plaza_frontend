@@ -59,7 +59,8 @@ src/
 
 ```
 /                 what is for sale
-/c/:category      the same, narrowed
+/servicios        the other aisle: people's work, not objects
+/c/:category      either aisle, narrowed - a slug is unique across both
 /p/:id            one listing
 /shops            the directory of shops
 /s/:slug          a shop and its catalogue
