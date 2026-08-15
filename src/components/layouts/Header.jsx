@@ -236,10 +236,21 @@ const secondary = ({ isActive }) =>
       : 'text-white/70 hover:bg-white/10 hover:text-white',
   )
 
-/** A basket you cannot see is one you forget you filled. */
+/**
+ * A basket you cannot see is one you forget you filled.
+ *
+ * And a basket nobody can have is a control that only leads to a sign-in
+ * screen. The rows live on the server now, so a signed-out visitor has none —
+ * the button was offering to show them an empty page they had not asked for.
+ * Hidden while the session is still being checked too, or it would appear and
+ * then vanish for everyone who is not signed in.
+ */
 const Cart = () => {
   const { t } = useTranslation()
   const { count } = useCart()
+  const { account, ready } = useAuth()
+
+  if (!ready || !account) return null
 
   return (
     <NavLink

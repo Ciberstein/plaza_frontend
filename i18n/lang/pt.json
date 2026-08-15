@@ -478,5 +478,18 @@
   "Services.Empty.Body": "Seja o primeiro a oferecer o seu.",
   "Services.Offer": "Oferecer um serviço",
   "Shared.ProductCard.OnRequest": "A combinar",
-  "Listings.Kind.Service": "Serviço"
+  "Listings.Kind.Service": "Serviço",
+  "Editor.Section.RateAvailability": "Tarifa e disponibilidade",
+  "Editor.Section.Where": "Localização e modalidade",
+  "Editor.PublishService": "Publicar um serviço",
+  "Editor.Title.PlaceholderService": "Instalação e reparo de encanamento",
+  "Editor.Title.HintService": "O que você faz, nas palavras que alguém buscaria.",
+  "Editor.Description.PlaceholderService": "12 anos de experiência. Atendo em Bogotá e região, levo minhas próprias ferramentas e dou garantia de 3 meses.",
+  "Editor.Rate.Placeholder": "45000",
+  "Editor.SoldAs.LabelService": "Oferecido como",
+  "Editor.Summary.NoRate": "Sem tarifa",
+  "Editor.Availability.ActiveService.Subtitle": "Os clientes podem ver e solicitar",
+  "Editor.Photos.DragHintService": "Arraste para ordenar. A primeira é a capa. Um serviço pode ser publicado sem fotos, mas uma de um trabalho pronto convence mais que qualquer descrição. Até {{max}}. Sobem quando você salva.",
+  "Common.OneMoment": "Um momento…",
+  "Shared.Price.FreeShipping": "Frete grátis"
 }

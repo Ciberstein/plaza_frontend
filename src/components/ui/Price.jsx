@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 import { formatMoney } from '../../utils/money'
 
 const SIZES = {
@@ -24,6 +25,7 @@ const SIZES = {
  * background, with ink on top.
  */
 const Price = ({ amount, was = null, currency = 'COP', size = 'md', freeShipping = false, className }) => {
+  const { t } = useTranslation()
   const discount = was && was > amount ? Math.round(((was - amount) / was) * 100) : null
 
   return (
@@ -46,7 +48,7 @@ const Price = ({ amount, was = null, currency = 'COP', size = 'md', freeShipping
       </span>
 
       {freeShipping && (
-        <span className="text-sm font-semibold text-good">Free shipping</span>
+        <span className="text-sm font-semibold text-good">{t('Shared.Price.FreeShipping')}</span>
       )}
     </div>
   )

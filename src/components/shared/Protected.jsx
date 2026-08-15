@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/auth'
 
 /**
@@ -9,13 +10,14 @@ import { useAuth } from '../../context/auth'
  * person back to the sign-in page every time they reload.
  */
 const Protected = ({ children }) => {
+  const { t } = useTranslation()
   const { account, ready } = useAuth()
   const location = useLocation()
 
   if (!ready) {
     return (
       <div className="shell py-20 text-center">
-        <p className="text-sm text-muted">One moment…</p>
+        <p className="text-sm text-muted">{t('Common.OneMoment')}</p>
       </div>
     )
   }

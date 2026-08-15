@@ -116,7 +116,7 @@ const Tile = ({ tile, cover, busy }) => {
  * Reordering that only works with a mouse is a feature some people simply do
  * not have, and it would have replaced a button that worked for everyone.
  */
-const Photos = ({ tiles, onQueue, onReorder, busy }) => {
+const Photos = ({ tiles, onQueue, onReorder, busy, kind }) => {
   const { t } = useTranslation()
   const fileInput = useRef(null)
   const total = tiles.length
@@ -162,8 +162,13 @@ const Photos = ({ tiles, onQueue, onReorder, busy }) => {
 
   return (
     <div>
+      {/* A photograph proves an object is real and is what it says. Work has
+          nothing to photograph before it is done, so the service version stops
+          promising that one is required — which it no longer is. */}
       <p className="text-sm leading-relaxed text-muted">
-        {t('Editor.Photos.DragHint', { max: MAX_PHOTOS })}
+        {kind === 'service'
+          ? t('Editor.Photos.DragHintService', { max: MAX_PHOTOS })
+          : t('Editor.Photos.DragHint', { max: MAX_PHOTOS })}
       </p>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dropped}>
@@ -241,7 +246,7 @@ const PriceSummary = ({ control, published, kind }) => {
     ? t('Common.OnRequest')
     : price
       ? formatMoney(price)
-      : t('Editor.Summary.NoPrice')
+      : isService ? t('Editor.Summary.NoRate') : t('Editor.Summary.NoPrice')
 
   const unit = isService && !onRequest && rateUnit ? rateUnitShort(t, rateUnit) : null
 
@@ -762,7 +767,9 @@ const Editor = () => {
           </Link>
 
           <h1 className="rule-accent mt-5 font-display text-3xl font-bold tracking-tight text-ink">
-            {id ? t('Editor.EditTitle') : t('Sell.Get.ListItem')}
+            {id
+              ? t('Editor.EditTitle')
+              : isService ? t('Editor.PublishService') : t('Sell.Get.ListItem')}
           </h1>
         </div>
 
@@ -772,7 +779,7 @@ const Editor = () => {
         <form onSubmit={handleSubmit(save)} className="flex flex-col gap-4">
           <Accordion
             key={`item-${problems.item}`}
-            title={t('Editor.Section.Item')}
+            title={isService ? t('Editor.Section.Service') : t('Editor.Section.Item')}
             summary={<ItemSummary control={control} categories={categoryOptions} conditions={conditions} kind={kind} />}
             problem={problems.item}
             defaultOpen
@@ -810,8 +817,8 @@ const Editor = () => {
 
             <Input
               label={t('Editor.Title.Label')}
-              placeholder={t('Editor.Title.Placeholder')}
-              hint={t('Editor.Title.Hint')}
+              placeholder={isService ? t('Editor.Title.PlaceholderService') : t('Editor.Title.Placeholder')}
+              hint={isService ? t('Editor.Title.HintService') : t('Editor.Title.Hint')}
               error={errors.title?.message}
               {...register('title', {
                 required: t('Editor.Title.Required'),
@@ -860,7 +867,8 @@ const Editor = () => {
                 name="shopId" control={control}
                 render={({ field }) => (
                   <Select
-                    label={t('Editor.SoldAs.Label')} options={shopOptions} value={field.value}
+                    label={isService ? t('Editor.SoldAs.LabelService') : t('Editor.SoldAs.Label')}
+                    options={shopOptions} value={field.value}
                     onChange={next => { field.onChange(next); suggestDelivery(next) }}
                   />
                 )}
@@ -869,7 +877,7 @@ const Editor = () => {
 
             <Textarea
               label={t('Product.DescriptionTitle')} optional rows={4}
-              placeholder={t('Editor.Description.Placeholder')}
+              placeholder={isService ? t('Editor.Description.PlaceholderService') : t('Editor.Description.Placeholder')}
               error={errors.description?.message}
               {...register('description')}
             />
@@ -878,7 +886,7 @@ const Editor = () => {
 
           <Accordion
             key={`price-${problems.price}`}
-            title={t('Editor.Section.Price')}
+            title={isService ? t('Editor.Section.RateAvailability') : t('Editor.Section.Price')}
             summary={<PriceSummary control={control} published={published} kind={kind} />}
             problem={problems.price}
           >
@@ -904,7 +912,8 @@ const Editor = () => {
             <div className="grid gap-6 sm:grid-cols-2">
               <Input
                 label={isService ? t('Editor.Rate.Label') : t('Editor.Price.Label')}
-                prefix="$" inputMode="decimal" placeholder="180000"
+                prefix="$" inputMode="decimal"
+                placeholder={isService ? t('Editor.Rate.Placeholder') : '180000'}
                 disabled={isService && onRequest}
                 error={errors.price?.message}
                 {...register('price', {
@@ -948,7 +957,14 @@ const Editor = () => {
                 <Select
                   label={t('Editor.Availability.Label')}
                   options={[
-                    { value: 'active', label: t('Editor.Summary.Available'), subtitle: t('Editor.Availability.Active.Subtitle') },
+                    {
+                      value: 'active',
+                      label: t('Editor.Summary.Available'),
+                      // A client requests a service; nobody buys one.
+                      subtitle: isService
+                        ? t('Editor.Availability.ActiveService.Subtitle')
+                        : t('Editor.Availability.Active.Subtitle'),
+                    },
                     { value: 'paused', label: t('Listings.Status.Paused.Label'), subtitle: t('Editor.Availability.Paused.Subtitle') },
                   ]}
                   value={empty ? null : field.value}
@@ -968,7 +984,7 @@ const Editor = () => {
 
           <Accordion
             key={`delivery-${problems.delivery}`}
-            title={isService ? t('Editor.Section.Service') : t('Editor.Section.Delivery')}
+            title={isService ? t('Editor.Section.Where') : t('Editor.Section.Delivery')}
             summary={<DeliverySummary control={control} cities={cities} kind={kind} />}
             problem={problems.delivery}
           >
@@ -1008,6 +1024,7 @@ const Editor = () => {
           <Accordion title={t('Editor.Section.Photos')} summary={photoSummary}>
             <Photos
               tiles={tiles}
+              kind={kind}
               busy={busy}
               onQueue={items => setQueued(current => [...current, ...items])}
               onReorder={setArrangement}

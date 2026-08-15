@@ -478,5 +478,18 @@
   "Services.Empty.Body": "Sé el primero en ofrecer el tuyo.",
   "Services.Offer": "Ofrecer un servicio",
   "Shared.ProductCard.OnRequest": "A convenir",
-  "Listings.Kind.Service": "Servicio"
+  "Listings.Kind.Service": "Servicio",
+  "Editor.Section.RateAvailability": "Tarifa y disponibilidad",
+  "Editor.Section.Where": "Ubicación y modalidad",
+  "Editor.PublishService": "Publicar un servicio",
+  "Editor.Title.PlaceholderService": "Instalación y reparación de plomería",
+  "Editor.Title.HintService": "Qué haces, con las palabras que alguien buscaría.",
+  "Editor.Description.PlaceholderService": "12 años de experiencia. Trabajo en Bogotá y alrededores, llevo mis propias herramientas y doy garantía de 3 meses.",
+  "Editor.Rate.Placeholder": "45000",
+  "Editor.SoldAs.LabelService": "Ofrecido como",
+  "Editor.Summary.NoRate": "Sin tarifa",
+  "Editor.Availability.ActiveService.Subtitle": "Los clientes pueden verlo y solicitarlo",
+  "Editor.Photos.DragHintService": "Arrástralas para ordenarlas. La primera es la portada. Un servicio se puede publicar sin fotos, pero una de un trabajo terminado convence más que cualquier descripción. Hasta {{max}}. Se suben cuando guardas.",
+  "Common.OneMoment": "Un momento…",
+  "Shared.Price.FreeShipping": "Envío gratis"
 }

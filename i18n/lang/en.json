@@ -478,5 +478,18 @@
   "Services.Empty.Body": "Be the first to offer yours.",
   "Services.Offer": "Offer a service",
   "Shared.ProductCard.OnRequest": "On request",
-  "Listings.Kind.Service": "Service"
+  "Listings.Kind.Service": "Service",
+  "Editor.Section.RateAvailability": "Rate and availability",
+  "Editor.Section.Where": "Location and how you work",
+  "Editor.PublishService": "Offer a service",
+  "Editor.Title.PlaceholderService": "Plumbing installation and repair",
+  "Editor.Title.HintService": "What you do, in the words somebody would search for.",
+  "Editor.Description.PlaceholderService": "12 years of experience. I work in Bogotá and nearby, bring my own tools and guarantee the work for 3 months.",
+  "Editor.Rate.Placeholder": "45000",
+  "Editor.SoldAs.LabelService": "Offered as",
+  "Editor.Summary.NoRate": "No rate",
+  "Editor.Availability.ActiveService.Subtitle": "Clients can see it and request it",
+  "Editor.Photos.DragHintService": "Drag to reorder. The first is the cover. A service can go up without photos, but one of finished work convinces more than any description. Up to {{max}}. They upload when you save.",
+  "Common.OneMoment": "One moment…",
+  "Shared.Price.FreeShipping": "Free shipping"
 }
