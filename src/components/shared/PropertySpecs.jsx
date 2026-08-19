@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { CheckIcon } from '@heroicons/react/20/solid'
 import { MapPinIcon, PhoneIcon } from '@heroicons/react/24/outline'
+import PropertyMap from './PropertyMap'
 import { withFeatureLabels } from '../../utils/vocabulary'
 import { formatMoney } from '../../utils/money'
 
@@ -142,6 +143,12 @@ const PropertySpecs = ({ product }) => {
             {t('Property.Location.Hidden')}
           </p>
         )}
+
+        {/* Below the words, never instead of them. The map is absent whenever
+            there is no coordinate, no key configured or the script would not
+            load, and in all three cases the line above still says where the
+            place is. */}
+        <PropertyMap property={property} title={product.title} />
       </section>
 
       {/* Only when the owner asked for it. The server sends null otherwise, so

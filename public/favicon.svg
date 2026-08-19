@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Plaza">
+  <!--
+    The wordmark, cropped to one letter.
+
+    Plaza's mark is not a symbol — it is the word set in Bricolage Grotesque
+    with a rule under it, and that rule repeats all over the app, under the
+    wordmark and under every section heading. So this is the wordmark's first
+    letter and its one distinctive gesture, rather than a new shape invented
+    for this file alone.
+
+    The P is drawn as a path rather than set as text. Nothing renders a favicon
+    with the site's webfont loaded, so `font-family` here would fall back to
+    whatever the machine happens to have and the mark would differ from one
+    tab to the next.
+
+    Full bleed and square. Browsers and operating systems apply their own
+    masking, and a solid block of the band colour is the boldest this can be at
+    sixteen pixels — which is the only size that really matters.
+
+    Geometry, so it can be adjusted without guessing: the letter is centred at
+    x=32 with a 20px margin either side; the bowl is a true semicircle of
+    radius 13 about (31,23), and its counter a concentric one of radius 6, so
+    the bowl reads 7 thick against an 11-wide stem.
+  -->
+  <rect width="64" height="64" fill="#254c93"/>
+
+  <path
+    d="M20 10 H31 A13 13 0 0 1 31 36 H31 V46 H20 Z
+       M31 17 A6 6 0 0 1 31 29 Z"
+    fill="#ffffff"
+    fill-rule="evenodd"/>
+
+  <!-- The rule, the width of the letter it sits under. At 70% white for the
+       same reason it is in the header: it accompanies the mark rather than
+       competing with it. -->
+  <rect x="20" y="51" width="24" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.7"/>
+</svg>

@@ -31,6 +31,10 @@ const EMPTY = {
   addressVisibility: [],
   strata: [],
   regions: [],
+  // Present only in development, where the API sends the guest account so the
+  // login screen can print it. Null everywhere else, which is what the login
+  // screen checks — it never decides this for itself.
+  demo: null,
 }
 
 const MetaContext = createContext({ ...EMPTY, ready: false })

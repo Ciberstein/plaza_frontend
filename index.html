@@ -7,6 +7,17 @@
          sit inside a bar that belongs to no design. One value, because the app
          has one palette. -->
     <meta name="theme-color" content="#254c93" />
+    <!-- SVG only, and deliberately. A .ico is three bitmaps in a container
+         invented for Windows 95; every browser that has shipped in years reads
+         this instead, and one vector file is sharp on a retina tab, in a
+         bookmarks bar and on a pinned tile without three exports to keep in
+         step with each other.
+
+         The gap that leaves is iOS: Safari wants apple-touch-icon.png at
+         180x180 and will not read this, so an app saved to a home screen there
+         still gets a screenshot. That needs a raster export, which is worth
+         doing the moment anybody is expected to save Plaza to a phone. -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>Plaza</title>
   </head>
   <body>

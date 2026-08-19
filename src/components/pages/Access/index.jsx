@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button, Input } from '../../ui'
 import { useAuth } from '../../../context/auth'
+import { useMeta } from '../../../context/meta'
 
 /**
  * One page for both signing in and creating an account.
@@ -13,6 +14,11 @@ import { useAuth } from '../../../context/auth'
  * over. The toggle keeps whatever they already typed.
  */
 const Access = ({ mode = 'login' }) => {
+  // Present only where the API chose to send it, which is development. The
+  // frontend does not decide whether to show this and does not know the
+  // password — both come from the server, so a production build cannot leak a
+  // credential it was never given.
+  const { demo } = useMeta()
   const { t } = useTranslation()
   const [creating, setCreating] = useState(mode === 'register')
 
@@ -31,6 +37,7 @@ const Access = ({ mode = 'login' }) => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { username: '', email: '', password: '' } })
 
@@ -91,6 +98,41 @@ const Access = ({ mode = 'login' }) => {
           <p className="mt-1.5 text-sm text-muted">
             {creating ? t('Access.CreateSubtitle') : t('Access.WelcomeBack')}
           </p>
+
+          {/* Above the form and not below it: somebody who came here to look
+              around rather than to sign in should find this before they start
+              inventing an address. Hidden while creating an account, where it
+              would be an answer to a question nobody asked. */}
+          {demo && !creating && (
+            <div className="mt-6 rounded-pz border border-line border-l-[3px] border-l-info bg-sunk p-4">
+              <p className="text-sm font-semibold text-ink">{t('Access.Demo.Title')}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">{t('Access.Demo.Body')}</p>
+
+              <dl className="tabular mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13px]">
+                <dt className="text-faint">{t('Access.Demo.Email')}</dt>
+                <dd className="text-ink select-all">{demo.email}</dd>
+                <dt className="text-faint">{t('Access.Demo.Password')}</dt>
+                <dd className="text-ink select-all">{demo.password}</dd>
+              </dl>
+
+              {/* Typed for them. The password changes daily and is long enough
+                  to mistype, and a demo account nobody can get into is worse
+                  than none. */}
+              <Button.Action
+                type="button"
+                variant="outline"
+                color="neutral"
+                size="sm"
+                className="mt-3"
+                onClick={() => {
+                  setValue('email', demo.email)
+                  setValue('password', demo.password)
+                }}
+              >
+                {t('Access.Demo.Fill')}
+              </Button.Action>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-7 flex flex-col gap-5">
             {creating && (

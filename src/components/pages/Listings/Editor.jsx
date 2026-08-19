@@ -39,6 +39,7 @@ import {
   withRateUnitLabels,
   propertySummary,
 } from '../../../utils/vocabulary'
+import LocationPicker from '../../shared/LocationPicker'
 import products from '../../../services/products.services'
 import shops from '../../../services/shops.services'
 
@@ -63,6 +64,10 @@ const PROPERTY_FIELDS = [
   'bedrooms', 'bathrooms', 'halfBaths', 'parking',
   'stratum', 'floor', 'builtYear', 'adminFee', 'adminIncluded',
   'features', 'neighborhood', 'address', 'addressVisibility', 'phonePublic',
+  // The pin. On the list like everything else, so it is loaded back when the
+  // seller reopens the listing and sent when they save — without it the map
+  // would place a pin the form then quietly threw away.
+  'latitude', 'longitude',
 ]
 
 // What each of them is when there is nothing stored. Empty strings rather than
@@ -77,6 +82,10 @@ const DEFAULT_PROPERTY = {
   adminFee: '', adminIncluded: false,
   features: [], neighborhood: '', address: '',
   addressVisibility: 'exact', phonePublic: false,
+  // null rather than '': there is a difference between a property nobody has
+  // placed and one placed at the origin, and `num('')` on the way out would
+  // turn the empty string into a coordinate in the Gulf of Guinea.
+  latitude: null, longitude: null,
 }
 
 /**
@@ -479,6 +488,7 @@ const Editor = () => {
       adminFee: '', adminIncluded: false,
       features: [], neighborhood: '', address: '',
       addressVisibility: 'exact', phonePublic: false,
+      latitude: null, longitude: null,
     },
   })
 
@@ -526,6 +536,9 @@ const Editor = () => {
   // rent" is a question that means anything.
   const operation = useWatch({ control, name: 'operation' })
   const renting = operation === 'rent'
+  // Read by the map: the address is what the geocoder looks up, and the city
+  // narrows it — "Calle 45 # 12-34" exists in every town in the country.
+  const [address, cityId] = useWatch({ control, name: ['address', 'cityId'] })
 
   useEffect(() => {
     let ignore = false
@@ -1251,6 +1264,36 @@ const Editor = () => {
                     />
                   )}
                 />
+
+                {/* Under the visibility choice, because the pin is what that
+                    choice governs: on `exact` the public map shows it, and on
+                    anything else it shows a circle the server displaced. Said
+                    here so the seller reads it while choosing rather than
+                    discovering it on the live page. */}
+                <div className="flex flex-col gap-2">
+                  <Controller
+                    name="latitude" control={control}
+                    render={({ field: lat }) => (
+                      <Controller
+                        name="longitude" control={control}
+                        render={({ field: lng }) => (
+                          <LocationPicker
+                            address={address}
+                            city={cities.find(c => c.value === cityId)?.label}
+                            value={{ latitude: lat.value, longitude: lng.value }}
+                            onChange={(point) => {
+                              lat.onChange(point.latitude)
+                              lng.onChange(point.longitude)
+                            }}
+                          />
+                        )}
+                      />
+                    )}
+                  />
+                  <p className="text-xs leading-relaxed text-muted">
+                    {t('Editor.Map.Privacy')}
+                  </p>
+                </div>
 
                 {/* Off unless the owner says otherwise, and disabled outright
                     when there is no number to show — a tick that does nothing
